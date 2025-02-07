@@ -876,3 +876,5 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0', port=5000, debug=True)
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
+
+# Para rodar o servidor, execute o comando: python app.py
