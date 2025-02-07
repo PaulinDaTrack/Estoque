@@ -873,8 +873,7 @@ scheduler.start()
 
 if __name__ == "__main__":
     try:
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False)
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
 
-# Para rodar o servidor, execute o comando: python app.py
