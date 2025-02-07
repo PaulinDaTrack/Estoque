@@ -15,11 +15,8 @@ app.secret_key = 'your_secret_key'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 def conectar_banco():
-    db_host = os.getenv('DB_HOST')
-    print(f"Tentando conectar a: {db_host}")  # Debug temporário
     return mysql.connector.connect(
-        host=db_host,
-        #host=os.getenv('DB_HOST'),
+        host=os.getenv('DB_HOST'),
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASSWORD'),
         database=os.getenv('DB_NAME'),
