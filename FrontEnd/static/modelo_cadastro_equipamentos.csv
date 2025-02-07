@@ -1,0 +1,3 @@
+id_equipamento,modelo,chip,operadora,imei,orgao,observacao
+12345,RST LC 4G,123456789012345,Operadora1,123456789012345,Orgao1,Observacao1
+67890,RST-2G,678901234567890,Operadora2,678901234567890,Orgao2,Observacao2

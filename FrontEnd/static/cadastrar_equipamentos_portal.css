@@ -1,0 +1,93 @@
+/* 🔹 Mantendo o fundo da imagem como no padrão desejado */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    /* background-image: url("{{ url_for('static', filename='fundoInicial3.png') }}"); */
+    background-image: url("/static/fundoInicial3.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white
+}
+
+/* 🔹 Criando um fundo escuro translúcido apenas para a parte principal */
+.content-box {
+    background: rgba(0, 0, 0, 0.6); /* Fundo preto translúcido */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    width: 600px; /* Largura fixa */
+    max-width: 90%;
+}
+
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+}
+
+/* 🔹 Estilizando o título para melhor legibilidade */
+h2 {
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* 🔹 Botões estilizados de acordo com o padrão desejado */
+.btn-custom {
+    width: 500px; /* Largura fixa */
+    height: 50px;
+    font-size: 18px;
+    text-transform: uppercase;
+    background: #1b0150; /* Roxo escuro */
+    font-family: Andale Mono, monospace;
+    border-radius: 20px; /* Bordas arredondadas */
+    border: 2px solid #1E3A8A; /* Borda azul mais clara */
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Pequena sombra no texto */
+    transition: background 0.3s, opacity 0.5s, transform 0.2s;
+    display: block;
+    margin: 10px auto;
+}
+
+/* 🔹 Efeito hover dos botões */
+.btn-custom:hover {
+    background: #1E3A8A; /* Azul mais claro no hover */
+    transform: translateY(-5px); /* Efeito de elevação */
+}
+
+/* 🔹 Botão "Voltar" estilizado */
+.btn-danger {
+    background: #8B0000;
+    border: none;
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+.btn-danger:hover {
+    background: #A52A2A;
+}
+
+.btn-group-vertical {
+gap: 15px; /* Adiciona espaço entre os botões */
+}
+
+.btn-group-vertical .btn-custom {
+    border-radius: 20px !important; /* Força todas as bordas a serem arredondadas */
+    margin: 0; /* Remove margens padrão */
+}
+
+/* 🔹 Remove o estilo de agrupamento do Bootstrap */
+.btn-group-vertical > .btn {
+    border-radius: 20px !important;
+}

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cadastrar Equipamento</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+
+    <style>
+        /* 🔹 Define a altura e largura da página para ocupar toda a tela */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}"); /* Define a imagem de fundo */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+        }
+
+        /* 🔹 Caixa central que contém os elementos */
+        .content-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 40rem;
+        }
+
+        /* 🔹 Estilização do título */
+        h2 {
+            margin-bottom: 30px; /* Aumenta o espaço abaixo do título */
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+
+        /* Grupo de botões estilizado */
+        .btn-group-custom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50px;
+            overflow: hidden;
+            border: 2px solid #1E3A8A;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* 🔹 Botões "Cadastrar Equipamento" e "Cadastrar em Massa" */
+        .btn-red {
+            flex: 1rem;
+            height: 3rem; /* largura do botão*/
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            background: #1b0150;
+            font-family: Andale Mono, monospace;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s, transform 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* 🔹 Efeito ao passar o mouse */
+        .btn-red:hover {
+            background: #1E3A8A;
+            color: white;
+        }
+
+        /* 🔹 Arredondamento correto das extremidades dos botões */
+        .btn-group-custom > .btn-red:first-child {
+            border-radius: 50px 0 0 50px;
+        }
+
+        .btn-group-custom > .btn-red:last-child {
+            border-radius: 0 50px 50px 0;
+        }
+
+        /* 🔹 Linha separadora entre os botões */
+        .separator {
+            width: 2px;
+            height: 100%;
+            background: #1E3A8A;
+        }
+
+        /* 🔹 Botão "Voltar" */
+         .btn-danger-custom {
+            background: #8B0000;
+            width: 85%;
+            height: 2rem; /* Altura uniforme */
+            font-size: 0.8rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            font-family: Andale Mono, monospace;
+            transition: background 0.3s, transform 0.2s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto 0 auto;
+        }
+
+        /* 🔹 Efeito ao passar o mouse no botão "Voltar" */
+        .btn-danger-custom:hover {
+            background: #A52A2A;
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        /* 🔹 Estilização do formulário */
+        .form-frame {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 20px;
+            margin-top: 3rem;
+            width: 100%; 
+            max-width: 50rem;
+            margin: 1rem auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            display: none;
+        }
+
+        .btn-primary {
+        width: 100%;
+        border-radius: 50px; /* Cantos arredondados */
+        background: #1E3A8A; /* Azul */
+        border: 2px solid #1E3A8A; /* Borda azul */
+        font-size: 0.8rem; /* Tamanho do texto */
+        height: 2rem; /* Altura uniforme */
+        font-family: Andale Mono, monospace; /* Fonte do texto */
+        color: white; /* Cor do texto */
+        text-transform: uppercase; /* Texto em maiúsculas */
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Sombra leve no texto */
+        transition: background 0.3s, color 0.3s; /* Efeito suave */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* 🔹 Efeito ao passar o mouse */
+    .btn-primary:hover {
+        background: #162d5e; /* Azul mais escuro */
+        color: white;
+    }
+
+        /* 🔹 Ajuste para os campos do formulário */
+        .form-group {
+            width: 100%;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        input.form-control, select.form-control, textarea.form-control {
+            font-size: 0.8rem !important; /* Reduz o tamanho da fonte */
+            height: 30px !important; /* Reduz a altura dos campos */
+            padding: 4px 8px !important; /* Ajusta o espaçamento interno */
+        }
+
+        textarea.form-control {
+            height: 60px !important; /* Reduz a altura */
+            resize: vertical !important; /* Permite redimensionamento apenas vertical */
+            overflow-y: auto !important; /* Permite rolagem vertical quando necessário */
+        }
+
+        /* Estilo para o cartão flutuante */
+        .floating-card {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: none; /* Inicialmente oculto */
+            z-index: 1000;
+        }
+
+    </style>
+
+    <!-- Cartão flutuante -->
+    <div id="floating-card" class="floating-card">
+        <p id="floating-card-message"></p>
+    </div>
+
+    <div class="content-box">
+        <h2>CADASTRAR EQUIPAMENTO</h2>
+
+        <!-- 🔹 Botões de seleção -->
+        <div class="btn-group-custom">
+            <button type="button" class="btn btn-red" onclick="showForm('single')">Cadastrar Equipamento</button>
+            <div class="separator"></div>
+            <button type="button" class="btn btn-red" onclick="showForm('mass')">Cadastrar em Massa</button>
+        </div>
+
+        <!-- 🔹 Formulário de Cadastro Individual -->
+        <div id="single-form" class="form-frame">
+            <form id="form-cadastro" method="POST">
+                <div class="form-group">
+                    <label for="id_equipamento">ID do Equipamento</label>
+                    <input type="number" class="form-control" id="id_equipamento" name="id_equipamento" required>
+                </div>
+                <div class="form-group">
+                    <label for="modelo">Modelo</label>
+                    <select class="form-control" id="modelo" name="modelo" required>
+                        <option value="RST LC 4G">RST LC 4G</option>
+                        <option value="RST-2G">RST-2G</option>
+                        <option value="RST-4G">RST-4G</option>
+                        <option value="VIRLOC">VIRLOC</option>
+                        <option value="SATELITAL">SATELITAL</option>
+                    </select>
+                </div>
+                <!-- 🔹 Campo IMEI adicionado novamente -->
+                <div class="form-group">
+                    <label for="imei">IMEI</label>
+                    <input type="number" class="form-control" id="imei" name="imei">
+                </div>
+                <!-- 🔹 Campo Observação adicionado novamente -->
+                <div class="form-group">
+                    <label for="observacao">Observação</label>
+                    <textarea class="form-control" id="observacao" name="observacao"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </form>
+        </div>
+
+        <!-- 🔹 Formulário de Cadastro em Massa -->
+        <div id="mass-form" class="form-frame">
+            <form method="POST" action="{{ url_for('cadastrar_equipamentos_em_massa') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Selecione o arquivo CSV ou XLSX</label>
+                    <input type="file" class="form-control-file" id="file" name="file" accept=".csv, .xlsx" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Carregar Arquivo</button>
+            </form>
+        </div>
+
+        <!-- 🔹 Botão "Voltar" -->
+        <a href="{{ url_for('index') }}" class="btn btn-danger-custom">Voltar</a>
+    </div>
+
+    <script>
+        // Função para alternar entre os formulários
+        function showForm(formType) {
+            document.getElementById('single-form').style.display = formType === 'single' ? 'block' : 'none';
+            document.getElementById('mass-form').style.display = formType === 'mass' ? 'block' : 'none';
+            localStorage.setItem('lastFormType', formType);
+            if (formType === 'single') {
+                document.getElementById('id_equipamento').focus();
+            }
+        }
+
+        // Função para lembrar a última escolha de modelo
+        function rememberModel() {
+            const lastModel = localStorage.getItem('lastModel');
+            if (lastModel) {
+                document.getElementById('modelo').value = lastModel;
+            }
+        }
+
+        // Salvar a escolha do modelo no localStorage
+        document.getElementById('form-cadastro').addEventListener('submit', function() {
+            const selectedModel = document.getElementById('modelo').value;
+            localStorage.setItem('lastModel', selectedModel);
+        });
+
+        // Chamar a função para lembrar o modelo ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            rememberModel();
+            const lastFormType = localStorage.getItem('lastFormType');
+            if (lastFormType) {
+                showForm(lastFormType);
+            }
+            const message = localStorage.getItem('floatingCardMessage');
+            const isSuccess = localStorage.getItem('floatingCardSuccess') === 'true';
+            if (message) {
+                showFloatingCard(message, isSuccess);
+                localStorage.removeItem('floatingCardMessage');
+                localStorage.removeItem('floatingCardSuccess');
+            }
+        });
+
+        // Função para mostrar o cartão flutuante
+        function showFloatingCard(message, isSuccess) {
+            const card = document.getElementById('floating-card');
+            const cardMessage = document.getElementById('floating-card-message');
+            cardMessage.textContent = message;
+            card.style.backgroundColor = isSuccess ? 'rgba(0, 128, 0, 0.8)' : 'rgba(128, 0, 0, 0.8)';
+            card.style.display = 'block';
+            setTimeout(() => {
+                card.style.display = 'none';
+            }, 3000); // Ocultar após 3 segundos
+        }
+
+        // Salvar a mensagem de sucesso ou erro no localStorage ao enviar o formulário
+        document.getElementById('form-cadastro').addEventListener('submit', function(event) {
+            localStorage.setItem('floatingCardMessage', 'Equipamento cadastrado com sucesso!');
+            localStorage.setItem('floatingCardSuccess', 'true');
+        });
+    </script>
+</body>
+</html>

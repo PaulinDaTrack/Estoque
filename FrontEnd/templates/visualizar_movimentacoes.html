@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Movimentações</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='visualizar_movimentacoes.css') }}">
+
+    <style>
+        /* 🔹 Corrigindo o fundo da imagem */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+        }
+
+        .container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+        }
+
+        h2 {
+            margin-bottom: 30px; /* Aumenta o espaço abaixo do título */
+            font-weight: 700; /* Negrito */
+            font-size: 35px;
+            text-align: center;
+        }
+
+        .table {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .status-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .status-btn:hover {
+            color: #1E90FF;
+        }
+
+        /* 🔹 Estilizando o botão "Voltar" no padrão correto */
+        .btn-danger-custom {
+            background: #8B0000;
+            border: none;
+            font-size: 18px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            font-family: Andale Mono, monospace;
+            transition: background 0.3s, transform 0.2s;
+            width: 500px;
+            height: 50px;
+            color: white;
+            margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-danger-custom:hover {
+            background: #A52A2A;
+            transform: translateY(-5px);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="frame">
+            <h2>VISUALIZAR MOVIMENTAÇÕES</h2>
+            <form method="GET" action="{{ url_for('visualizar_movimentacoes') }}">
+                <div class="filter-menu">
+                    <div class="form-group">
+                        <label for="id_equipamento_filtro">ID Equipamento:</label>
+                        <input type="text" name="id_equipamento_filtro" class="form-control" value="{{ request.args.get('id_equipamento_filtro', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="origem_filtro">Origem:</label>
+                        <select name="origem_filtro" class="form-control">
+                            <option value="">Todos</option>
+                            {% for origem in origens %}
+                            <option value="{{ origem }}" {% if request.args.get('origem_filtro') == origem %}selected{% endif %}>{{ origem }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="destino_filtro">Destino:</label>
+                        <select name="destino_filtro" class="form-control">
+                            <option value="">Todos</option>
+                            {% for destino in destinos %}
+                            <option value="{{ destino }}" {% if request.args.get('destino_filtro') == destino %}selected{% endif %}>{{ destino }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="data_filtro">Data:</label>
+                        <input type="date" name="data_filtro" class="form-control" value="{{ request.args.get('data_filtro', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="tipo_filtro">Tipo:</label>
+                        <select name="tipo_filtro" class="form-control">
+                            <option value="">Todos</option>
+                            {% for tipo in tipos %}
+                            <option value="{{ tipo }}" {% if request.args.get('tipo_filtro') == tipo %}selected{% endif %}>{{ tipo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group-buttons">
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                        <a href="{{ url_for('visualizar_movimentacoes') }}" class="btn btn-secondary">Limpar</a>
+                    </div>
+                </div>
+            </form>
+            <div class="scrollable-content">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID Equipamento</th>
+                                <th>Origem</th>
+                                <th>Destino</th>
+                                <th>Data Movimentação</th>
+                                <th>Tipo Movimentação</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movimentacoes-list">
+                            {% for movimentacao in resultados %}
+                            <tr>
+                                <td>{{ movimentacao[0] }}</td>
+                                <td>{{ movimentacao[1] }}</td>
+                                <td>{{ movimentacao[2] }}</td>
+                                <td>{{ movimentacao[3]|datetimeformat }}</td>
+                                <td>{{ movimentacao[4] }}</td>
+                                <td>{{ movimentacao[5] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <nav>
+                <ul class="pagination">
+                    {% for page_num in range(1, total_pages + 1) %}
+                    <li class="page-item {% if page_num == current_page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('visualizar_movimentacoes', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+
+            <!-- 🔹 Botão "Voltar" agora está centralizado corretamente -->
+            <a href="{{ url_for('index') }}" class="btn-danger-custom">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

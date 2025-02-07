@@ -1,0 +1,45 @@
+     /* 🔹 Corrigindo o fundo da imagem */
+     html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        /* background-image: url("{{ url_for('static', filename='fundoInicial3.png') }}"); */
+        background-image: url("/static/fundoInicial3.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
+    }
+
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        width: 100%;
+    }
+
+    .frame {
+        padding: 20px;
+        border-radius: 10px;
+        background-color: rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .scrollable-menu {
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .btn-red {
+        background-color: rgba(255, 0, 0, 0.486);
+        border-color: rgba(255, 0, 0, 0.486);
+        color: white;
+    }

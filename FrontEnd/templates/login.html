@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Gestão de Equipamentos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        /* 🔹 Define a fonte Andale Mono para toda a página */
+        body, input, button {
+            font-family: Andale Mono, monospace;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-image: url("{{ url_for('static', filename='fundologin.png') }}");
+        }
+
+        /* 🔹 Garante que o título "LOGIN" fique sempre em maiúsculas */
+        .login h2 {
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        /* 🔹 Aplica a fonte no placeholder dos inputs */
+        ::placeholder {
+            font-family: Andale Mono, monospace;
+            font-size: 1rem;
+        }
+
+        /* 🔹 Ajusta a largura das caixas (30% maior) e mantém centralizado */
+        .inputBx {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px; /* Define um limite maior */
+            min-width: 300px; /* Evita que fiquem pequenos */
+        }
+
+        /* 🔹 Ajuste dos inputs para ficarem maiores lateralmente */
+        .inputBx input {
+            width: 130%; /* Aumenta a largura em 30% */
+            max-width: 550px; /* Define um limite maior */
+            min-width: 280px; /* Evita que encolham muito */
+            padding: 14px 20px; /* Mantém um padding confortável */
+            font-size: 18px; /* Melhora a legibilidade */
+            box-sizing: border-box; /* Impede que o padding quebre o layout */
+            border-radius: 10px; /* Mantém o design arredondado */
+        }
+
+        /* 🔹 Ajusta o botão "Entrar" */
+        .inputBx input[type="submit"] {
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            background: #1E3A8A; /* Mantém o tom de azul */
+            color: white;
+            border: none;
+            font-size: 18px; /* Texto maior */
+            font-weight: bold;
+            height: 50px; /* Aumenta a altura do botão */
+        }
+
+        .inputBx input[type="submit"]:hover {
+            transform: translateY(-3px);
+            background: #162d5e; /* Azul mais escuro ao passar o mouse */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="square">
+        <i style="--clr:#006eff;"></i>
+        <i style="--clr:#001aff;"></i>
+        <i style="--clr:#00f7ff;"></i>
+        <div class="login">
+            <h2>LOGIN</h2>
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="inputBx">
+                    <input type="text" name="username" placeholder="Usuário" required>
+                </div>
+                <div class="inputBx">
+                    <input type="password" name="password" placeholder="Senha" required>
+                </div>
+                <div class="inputBx">
+                    <input type="submit" value="Entrar">
+                </div>
+                <div class="links">
+                    <!--<a href="#">Esqueceu a senha?</a>
+                    <a href="#">Cadastrar-se</a>-->
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

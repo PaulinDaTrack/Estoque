@@ -1,0 +1,60 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Evita rolagem inesperada */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url("{{ url_for('static', filename='fundoInicial3.png') }}"); /* Fundo com imagem */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-container {
+    background: rgba(0, 0, 0, 0.8); /* Fundo escuro para o formulário */
+    padding: 20px;
+    border-radius: 20px; /* Bordas mais arredondadas para um visual moderno */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.form-group label {
+    color: white;
+    font-family: Andale Mono, monospace;
+    font-size: 16px;
+}
+
+.btn-primary {
+    width: 500px; /* Aumentando o tamanho dos botões */
+    height: 50px;
+    font-size: 18px;
+    text-transform: uppercase;
+    background: #1b0150; /* Azul escuro */
+    font-family: Andale Mono, monospace;
+    border-radius: 20px; /* Bordas mais arredondadas */
+    border: 2px solid #1E3A8A; /* Borda azul mais clara */
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Sombra no texto */
+    transition: background 0.3s, opacity 0.5s, transform 0.2s;
+    opacity: 0; /* Inicialmente invisível */
+}
+
+.btn-primary:hover {
+    background: #1E3A8A; /* Azul mais claro no hover */
+    transform: translateY(-5px); /* Efeito de relevo */
+}
+
+.btn-primary.fade-in {
+    opacity: 1; /* Tornar visível */
+}

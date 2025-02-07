@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Gestão de Equipamentos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+
+    <style>
+        /* 🔹 Define a imagem de fundo */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}");
+        }
+
+        .container {
+            height: 100%;
+            display: flex;
+            justify-content: center; /* Move os botões para a direita */
+            align-items: center;
+        }
+
+        .btn-custom {
+            width: 500px;
+            height: 50px;
+            font-size: 18px;
+            text-transform: uppercase;
+            background: #1b0150;
+            font-family: Andale Mono, monospace;
+            border-radius: 20px;
+            border: 2px solid #1E3A8A;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s, opacity 0.5s, transform 0.2s;
+            opacity: 0;
+        }
+
+        .btn-custom:hover {
+            background: #1E3A8A;
+            transform: translateY(-5px);
+        }
+
+        .btn-custom.fade-in {
+            opacity: 1;
+        }
+
+        .menu {
+            text-align: center;
+        }
+
+        /* 🔹 Garante que os botões mantenham as cores padrão ao passar o mouse e clicar */
+        .btn-custom,
+        .btn-custom:hover,
+        .btn-custom:focus,
+        .btn-custom:active {
+            outline: none !important; /* Remove o contorno ao focar/clicar */
+            box-shadow: none !important; /* Remove sombras automáticas */
+            border-color: #1E3A8A !important; /* Mantém a cor da borda fixa */
+            color: white !important; /* Mantém a cor do texto */
+        }
+
+        /* 🔹 Se quiser desativar o efeito de clique (pressionado) */
+        .btn-custom:active {
+            transform: none !important; /* Impede o efeito de rebaixamento ao clicar */
+        }
+
+        .btn-danger-custom {
+            background: #8B0000 !important; /* Vermelho escuro */
+            border: 2px solid #8B0000 !important; /* Mantém a borda na mesma cor */
+            color: white !important; /* Mantém o texto branco */
+            text-transform: uppercase; /* Texto em maiúsculas */
+            font-family: Andale Mono, monospace; /* Fonte igual ao padrão */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Sombra no texto */
+            transition: background 0.3s, transform 0.2s; /* Suaviza a transição */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 500px; /* Mantém o tamanho original */
+            height: 50px; /* Mantém a altura original */
+            border-radius: 20px; /* Bordas arredondadas padrão */
+        }
+
+    /* 🔹 Mantém a cor vermelha ao passar o mouse */
+    .btn-danger-custom:hover {
+        background: #A52A2A !important; /* Vermelho mais claro */
+        transform: translateY(-3px); /* Efeito de leve elevação */
+    }
+
+        /* 🔹 Estilização da caixa de logout */
+        .floating-card {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        display: none;
+        text-align: center;
+        max-width: 350px;
+        width: 90%;
+    }
+
+    /* 🔹 Fundo escuro ao abrir a confirmação */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+
+    /* 🔹 Estilização do texto */
+    .logout-text {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+        font-family: Andale Mono, monospace; /* Fonte igual ao padrão */
+        text-transform: uppercase; /* Texto em maiúsculas */
+    }
+
+    /* 🔹 Layout dos botões */
+    .logout-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    /* 🔹 Estilização dos botões */
+    .logout-btn {
+        flex: 1;
+        padding: 10px;
+        font-family: Andale Mono, monospace; /* Fonte igual ao padrão */
+        text-transform: uppercase; /* Texto em maiúsculas */
+        font-size: 1rem;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        border: none;
+        font-weight: bold;
+    }
+
+    /* 🔹 Botão "Sim" (vermelho) */
+    .btn-danger.logout-btn {
+        background: #D32F2F;
+        color: white;
+    }
+
+    .btn-danger.logout-btn:hover {
+        background: #B71C1C;
+    }
+
+    /* 🔹 Botão "Não" (cinza) */
+    .btn-secondary.logout-btn.cancel-btn {
+        background: #6C757D;
+        color: white;
+    }
+
+    .btn-secondary.logout-btn.cancel-btn:hover {
+        background: #545B62;
+    }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <div class="text-center mt-4 d-flex flex-column align-items-center">
+                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_equipamento'">
+                    <i class="fas fa-box"></i> Inventário de Equipamento
+                </button>
+                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_simcard'">
+                    <i class="fas fa-box"></i> Inventário de SIMCard
+                </button>
+                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_equipamentos_portal'">
+                    <i class="fas fa-file-alt"></i> Cadastrar Equipamentos
+                </button>
+                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/transferir_estoque_para_tecnico'">
+                    <i class="fas fa-exchange-alt"></i> Transferir para Técnico
+                </button>
+                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/transferir_tecnico_para_outro'">
+                    <i class="fas fa-exchange-alt"></i> Devolução/Transferência
+                </button>
+                <button class="btn btn-primary mb-2 btn-custom" onclick="window.location.href='/visualizar_estoque'">
+                    <i class="fas fa-eye"></i> Visualizar Estoque
+                </button>
+                <button class="btn btn-primary mb-2 btn-custom" onclick="window.location.href='/visualizar_movimentacoes'">
+                    <i class="fas fa-eye"></i> Visualizar Movimentações
+                </button>
+                <button class="btn btn-danger mb-2 btn-custom" onclick="confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+<div class="floating-card" id="logoutCard">
+    <p class="logout-text">Você tem certeza que deseja sair?</p>
+    <div class="logout-buttons">
+        <button class="btn btn-danger logout-btn" onclick="logout()">Sim</button>
+        <button class="btn btn-secondary logout-btn cancel-btn" onclick="closeCard()">Não</button>
+    </div>
+</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn-custom');
+            buttons.forEach((button, index) => {
+                setTimeout(() => {
+                    button.classList.add('fade-in');
+                }, index * 200); // Atraso para cada botão
+            });
+        });
+
+        function confirmLogout() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('logoutCard').style.display = 'block';
+        }
+
+        function closeCard() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('logoutCard').style.display = 'none';
+        }
+
+        function logout() {
+            window.location.href = '/logout';
+        }
+    </script>
+</body>
+</html>

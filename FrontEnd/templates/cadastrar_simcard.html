@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cadastrar SIMCard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* 🔹 Define a altura e largura da página para ocupar toda a tela */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+        }
+
+        /* 🔹 Criando um fundo translúcido para a área principal */
+        .content-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 🔹 Configuração do container */
+        .container {
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+        }
+
+        /* 🔹 Estilizando o título */
+        h1 {
+            margin-bottom: 0.6rem;
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+
+        /* 🔹 Estilização do formulário */
+        .form-frame {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-group {
+            width: 100%;
+            text-align: left;
+            font-size: 0.8rem;
+            margin-bottom: 0.6rem;
+        }
+
+        input.form-control, select.form-control {
+            font-size: 0.8rem !important;
+            height: 30px !important;
+            padding: 4px 8px !important;
+        }
+
+        /* 🔹 Estilização dos botões */
+        .btn-red, .btn-danger-custom {
+            width: 100%;
+            height: 2rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-family: Andale Mono, monospace;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s, transform 0.2s;
+            margin-top: 0.6rem;
+        }
+
+        .btn-red {
+            background: #1E3A8A;
+            border: 2px solid #1E3A8A;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-red:hover {
+            background: #162d5e;
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        .btn-danger-custom {
+            background: #8B0000;
+            border: none;
+            color: white;
+        }
+
+        .btn-danger-custom:hover {
+            background: #A52A2A;
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        .floating-card {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 128, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+        }
+        .floating-card.error {
+            background: rgba(255, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content-box">
+            <h1>CADASTRAR SIMCARD</h1>
+
+            <!-- 🔹 Formulário -->
+            <div class="form-frame">
+                <form method="POST" action="/cadastrar_simcard" style="display: flex; flex-direction: column; align-items: center; width: 100%;" onsubmit="setTimeout(function(){ document.getElementById('chip').focus(); }, 10);">
+                    <div class="form-group">
+                        <label for="chip">Chip (separe múltiplos chips por ponto e vírgula)</label>
+                        <input type="text" class="form-control" id="chip" name="chip" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="operadora">Operadora</label>
+                        <select class="form-control" id="operadora" name="operadora" required>
+                            <option value="AVATEK">AVATEK</option>
+                            <option value="ALLCOM">ALLCOM</option>
+                            <option value="LYRA">LYRA</option>
+                        </select>
+                    </div>
+
+                    <!-- 🔹 Botões "Cadastrar" e "Voltar" -->
+                    <button type="submit" class="btn btn-red">Cadastrar</button>
+                    <a href="/" class="btn btn-danger-custom">Voltar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="floating-card" id="success-card">
+        SIMCard cadastrado com sucesso!
+    </div>
+    <div class="floating-card error" id="error-card">
+        Erro ao cadastrar SIMCard!
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('chip').focus();
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('success')) {
+                document.getElementById('success-card').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('success-card').style.display = 'none';
+                }, 3000);
+            }
+            if (urlParams.has('error')) {
+                document.getElementById('error-card').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('error-card').style.display = 'none';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

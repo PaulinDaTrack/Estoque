@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+    <title>Visualizar Estoque</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='visualizar_estoque.css') }}">
+
+    <style>
+        /* 🔹 Corrigindo o fundo da imagem */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+        }
+
+        .container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+        }
+
+        h2 {
+            margin-bottom: 30px; /* Aumenta o espaço abaixo do título */
+            font-weight: 700; /* Negrito */
+            font-size: 35px;
+        }
+
+        .table {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .status-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .status-btn:hover {
+            color: #1E90FF;
+        }
+
+        /* 🔹 Botão "Voltar" estilizado no padrão */
+        .btn-danger-custom {
+            background: #8B0000;
+            border: none;
+            font-size: 18px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            font-family: Andale Mono, monospace;
+            transition: background 0.3s, transform 0.2s;
+            width: 500px;
+            height: 50px;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-danger-custom:hover {
+            background: #A52A2A;
+            transform: translateY(-5px);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>VISUALIZAR ESTOQUE</h2>
+        <table class="table table-striped" id="status-table">
+            <thead>
+                <tr>
+                    <th>Local</th>
+                    <th>Quantidade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status, quantidade in resultados %}
+                <tr class="status-row">
+                    <td>
+                        <button class="status-btn" onclick="mostrarDetalhes('{{ status }}')">{{ status }}</button>
+                    </td>
+                    <td>{{ quantidade }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="detalhes" class="mt-4" style="display: none;">
+            <h3>Detalhes</h3>
+            <button class="btn btn-secondary mb-2" onclick="toggleFilterMenu()">Mostrar/Esconder Filtros</button>
+            <div id="filter-menu" class="filter-menu">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th><input type="text" class="filter-input" id="filter-id" placeholder="Filtrar por ID" onkeyup="filtrarTabela()"></th>
+                            <th>
+                                <select class="filter-select" id="filter-modelo" onchange="filtrarTabela()">
+                                    <option value="">Filtrar por Modelo</option>
+                                    {% for modelo in modelos %}
+                                    <option value="{{ modelo }}">{{ modelo }}</option>
+                                    {% endfor %}
+                                </select>
+                            </th>
+                            <th><input type="text" class="filter-input" id="filter-chip" placeholder="Filtrar por Chip" onkeyup="filtrarTabela()"></th>
+                            <th>
+                                <select class="filter-select" id="filter-operadora" onchange="filtrarTabela()">
+                                    <option value="">Filtrar por Operadora</option>
+                                    {% for operadora in operadoras %}
+                                    <option value="{{ operadora }}">{{ operadora }}</option>
+                                    {% endfor %}
+                                </select>
+                            </th>
+                            <th><input type="text" class="filter-input" id="filter-imei" placeholder="Filtrar por IMEI" onkeyup="filtrarTabela()"></th>
+                            <th>
+                                <select class="filter-select" id="filter-orgao" onchange="filtrarTabela()">
+                                    <option value="">Filtrar por Órgão</option>
+                                    {% for orgao in orgaos %}
+                                    <option value="{{ orgao }}">{{ orgao }}</option>
+                                    {% endfor %}
+                                </select>
+                            </th>
+                            <th><input type="text" class="filter-input" id="filter-observacao" placeholder="Filtrar por Observação" onkeyup="filtrarTabela()"></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="detalhes-table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Modelo</th>
+                            <th>Chip</th>
+                            <th>Operadora</th>
+                            <th>IMEI</th>
+                            <th>Órgão</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detalhes-list">
+                        <!-- Detalhes dos equipamentos serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary mt-2" onclick="voltarParaStatus()">Selecionar Outro Local</button>
+        </div>
+
+        <!-- 🔹 Botão "Voltar" atualizado no padrão correto -->
+        <a href="{{ url_for('index') }}" class="btn btn-danger-custom">Voltar</a>
+    </div>
+
+    <input type="hidden" id="status-atual" value="">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/opcoes_filtros_equipamentos')
+                .then(response => response.json())
+                .then(data => {
+                    const modeloSelect = document.getElementById('filter-modelo');
+                    const operadoraSelect = document.getElementById('filter-operadora');
+                    const orgaoSelect = document.getElementById('filter-orgao');
+                    
+                    data.modelos.forEach(modelo => {
+                        const option = document.createElement('option');
+                        option.value = modelo;
+                        option.textContent = modelo;
+                        modeloSelect.appendChild(option);
+                    });
+                    
+                    data.operadoras.forEach(operadora => {
+                        const option = document.createElement('option');
+                        option.value = operadora;
+                        option.textContent = operadora;
+                        operadoraSelect.appendChild(option);
+                    });
+                    
+                    data.orgaos.forEach(orgao => {
+                        const option = document.createElement('option');
+                        option.value = orgao;
+                        option.textContent = orgao;
+                        orgaoSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Erro ao buscar opções de filtros:', error));
+        });
+
+        function filtrarTabela() {
+            const filtros = {
+                id: document.getElementById('filter-id').value,
+                modelo: document.getElementById('filter-modelo').value,
+                chip: document.getElementById('filter-chip').value,
+                operadora: document.getElementById('filter-operadora').value,
+                imei: document.getElementById('filter-imei').value,
+                orgao: document.getElementById('filter-orgao').value,
+                observacao: document.getElementById('filter-observacao').value,
+                status: document.getElementById('status-atual').value // Adicionar o status atual aos filtros
+            };
+
+            const queryString = new URLSearchParams(filtros).toString();
+
+            fetch(`/filtrar_equipamentos?${queryString}`)
+                .then(response => response.json())
+                .then(data => {
+                    const detalhesList = document.getElementById('detalhes-list');
+                    detalhesList.innerHTML = '';
+                    data.forEach(equip => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${equip.id_equipamento}</td>
+                            <td>${equip.modelo}</td>
+                            <td>${equip.chip}</td>
+                            <td>${equip.operadora}</td>
+                            <td>${equip.imei}</td>
+                            <td>${equip.orgao}</td>
+                            <td>${equip.observacao}</td>
+                        `;
+                        detalhesList.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error('Erro ao filtrar equipamentos:', error));
+        }
+
+        function mostrarDetalhes(status) {
+            fetch(`/detalhes_estoque?status=${status}`)
+                .then(response => response.json())
+                .then(data => {
+                    const detalhesDiv = document.getElementById('detalhes');
+                    const detalhesList = document.getElementById('detalhes-list');
+                    const statusTable = document.getElementById('status-table');
+                    statusTable.style.display = 'none';
+                    detalhesList.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(equip => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${equip.id_equipamento}</td>
+                                <td>${equip.modelo}</td>
+                                <td>${equip.chip}</td>
+                                <td>${equip.operadora}</td>
+                                <td>${equip.imei}</td>
+                                <td>${equip.orgao}</td>
+                                <td>${equip.observacao}</td>
+                            `;
+                            detalhesList.appendChild(tr);
+                        });
+                        detalhesDiv.style.display = 'block';
+                        document.getElementById('status-atual').value = status; // Definir o status atual
+                    } else {
+                        detalhesDiv.style.display = 'none';
+                        alert('Nenhum equipamento encontrado para o status selecionado.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar detalhes:', error);
+                    alert('Erro ao buscar detalhes. Por favor, tente novamente.');
+                });
+        }
+
+        function voltarParaStatus() {
+            const statusTable = document.getElementById('status-table');
+            const detalhesDiv = document.getElementById('detalhes');
+            statusTable.style.display = 'table';
+            detalhesDiv.style.display = 'none';
+        }
+
+        function toggleFilterMenu() {
+            const filterMenu = document.getElementById('filter-menu');
+            filterMenu.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>

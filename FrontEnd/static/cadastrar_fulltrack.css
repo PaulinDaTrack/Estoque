@@ -1,0 +1,61 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Evita rolagem inesperada */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+    /* background-image: url("{{ url_for('static', filename='fundoInicial3.png') }}"); */
+    background-image: url("/static/fundoInicial3.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-red {
+    width: 500px; /* Aumentado o tamanho dos botões */
+    height: 50px; /* Aumentado a altura dos botões */
+    font-size: 18px; /* Aumentado o tamanho da fonte */
+    text-transform: uppercase;
+    background: #1b0150; /* Azul escuro */
+    font-family: Andale Mono, monospace;
+    border-radius: 20px; /* Bordas mais arredondadas para um design mais moderno */
+    border: 2px solid #1E3A8A; /* Borda azul mais clara para destaque */
+    color: white; /* Texto branco */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Pequena sombra no texto para melhor visibilidade */
+    transition: background 0.3s, opacity 0.5s, transform 0.2s; /* Transição suave */
+    opacity: 0; /* Inicialmente invisível */
+}
+
+.btn-red:hover {
+    background: #1E3A8A; /* Um azul um pouco mais claro no hover */
+    transform: translateY(-5px); /* Efeito de relevo */
+}
+
+.btn-red.fade-in {
+    opacity: 1; /* Tornar visível */
+}
+
+.message {
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.form-frame {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 20px; /* Mantendo o design mais arredondado */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
