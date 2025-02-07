@@ -10,13 +10,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='FrontEnd/templates', static_folder='FrontEnd/static')
 app.secret_key = 'your_secret_key'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 def conectar_banco():
+    db_host = os.getenv('DB_HOST')
+    print(f"Tentando conectar a: {db_host}")  # Debug temporário
     return mysql.connector.connect(
-        host=os.getenv('DB_HOST'),
+        host=db_host,
+        #host=os.getenv('DB_HOST'),
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASSWORD'),
         database=os.getenv('DB_NAME'),
