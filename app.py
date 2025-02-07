@@ -16,7 +16,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 def conectar_banco():
     return mysql.connector.connect(
-        host='srv1310.hstgr.io',
+        host=os.getenv('DB_HOST'),
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASSWORD'),
         database=os.getenv('DB_NAME'),
