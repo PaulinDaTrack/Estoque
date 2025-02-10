@@ -252,6 +252,14 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Carregar Arquivo</button>
             </form>
+            <!-- Adicionar links para download dos modelos -->
+            <div class="form-group mt-3">
+                <label>Baixar modelos de cadastro em massa:</label>
+                <ul>
+                    <li><a href="{{ url_for('static', filename='modelo_cadastro_equipamentos.csv') }}" download>Modelo CSV</a></li>
+                    <li><a href="{{ url_for('static', filename='modelo_cadastro_equipamentos.xlsx') }}" download>Modelo XLSX</a></li>
+                </ul>
+            </div>
         </div>
 
         <!-- 🔹 Botão "Voltar" -->

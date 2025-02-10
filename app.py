@@ -7,12 +7,17 @@ import random
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
+from flask_caching import Cache
+from apscheduler.job import job
 
 load_dotenv()
 
 app = Flask(__name__, template_folder='FrontEnd/templates', static_folder='FrontEnd/static')
 app.secret_key = 'your_secret_key'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+
+# Configuração do cache
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 def conectar_banco():
     return mysql.connector.connect(
@@ -55,6 +60,7 @@ criar_tabela_usuarios()
 # Chamar a função para adicionar o usuário padrão ao iniciar a aplicação
 adicionar_usuario_padrao()
 
+@cache.cached(timeout=60, key_prefix='listar_tecnicos')
 def listar_tecnicos():
     conexao = conectar_banco()
     cursor = conexao.cursor()
@@ -64,6 +70,7 @@ def listar_tecnicos():
     conexao.close()
     return [tecnico[0] for tecnico in tecnicos]
 
+@cache.cached(timeout=60, key_prefix='listar_operadoras')
 def listar_operadoras():
     conexao = conectar_banco()
     cursor = conexao.cursor()
@@ -73,6 +80,7 @@ def listar_operadoras():
     conexao.close()
     return [operadora[0] for operadora in operadoras]
 
+@cache.cached(timeout=60, key_prefix='listar_orgaos')
 def listar_orgaos():
     conexao = conectar_banco()
     cursor = conexao.cursor()
@@ -261,8 +269,8 @@ def transferir_tecnico_para_outro():
             tecnico_destino = request.form.get('tecnico_destino')
 
             for id_equipamento in ids_equipamentos:
-                if acao == "Devolver ao estoque":
-                    destino = "EM ESTOQUE"
+                if acao == "Enviar para teste":
+                    destino = "PARA TESTAR"
                     cursor.execute("""
                         UPDATE equipamentos
                         SET status = %s
@@ -271,7 +279,7 @@ def transferir_tecnico_para_outro():
                     cursor.execute("""
                         INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                         VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (id_equipamento, tecnico_origem, destino, datetime.now(), "Devolução", "Devolvido ao estoque"))
+                    """, (id_equipamento, tecnico_origem, destino, datetime.now(), "Envio para teste", "Enviado para teste"))
                 else:
                     destino = tecnico_destino
                     cursor.execute("""
@@ -487,7 +495,7 @@ def filtrar_equipamentos():
     valores = []
     
     for campo, valor in filtros.items():
-        if valor:
+        if (valor):
             query += f" AND {campo} LIKE %s"
             valores.append(f"%{valor}%")
     
@@ -750,15 +758,15 @@ def comparar_equipamentos():
     # URL para obter o token
     auth_url = "https://integration.systemsatx.com.br/Login"
     auth_params = {
-        "Username": "paulo_victor@ufms.br",
-        "Password": "paulovictor999"
+        "Username": os.getenv('SSX_USERNAME'),
+        "Password": os.getenv('SSX_PASSWORD')
     }
 
     # Fazer a requisição para obter o token
     auth_response = requests.post(auth_url, params=auth_params)
 
     # Verificar se a autenticação foi bem-sucedida
-    if auth_response.status_code == 200:
+    if (auth_response.status_code == 200):
         auth_data = auth_response.json()
         access_token = auth_data.get("AccessToken")
 
@@ -778,7 +786,7 @@ def comparar_equipamentos():
         tracker_response = requests.post(tracker_url, json=payload, headers=headers)
 
         # Verificar a resposta
-        if tracker_response.status_code == 200:
+        if (tracker_response.status_code == 200):
             tracker_data = tracker_response.json()
             ids_tracker = [item.get('IdTracker') for item in tracker_data if item.get('TrackedUnitType') == 1]
 
@@ -815,11 +823,12 @@ def comparar_equipamentos():
     else:
         print(f"Erro na autenticação: {auth_response.status_code}, {auth_response.text}")
 
+@job
 def verificar_equipamentos_fulltrack():
     url = "https://ws.fulltrack2.com/trackers/all"
     headers = {
-        "apikey": "f8c496428711c7dea7347ea76ffa4733cdd9c406",
-        "secretkey": "3a7e6572ccdedb8f8e0996f9ecca8bf9d017b4dc"
+        "apikey": os.getenv('API_KEY'),
+        "secretkey": os.getenv('SECRET_KEY')
     }
 
     response = requests.get(url, headers=headers)
@@ -865,10 +874,100 @@ def verificar_equipamentos_fulltrack():
     except requests.exceptions.JSONDecodeError:
         print("Erro: A resposta não está em formato JSON válido.", response.text)
 
+def mover_para_estoque():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("""
+            UPDATE equipamentos
+            SET status = 'EM ESTOQUE'
+            WHERE status = 'PARA TESTAR' AND DATE_ADD(data_movimentacao, INTERVAL 3 DAY) <= NOW()
+        """)
+        conexao.commit()
+    except Exception as e:
+        print(f"Erro ao mover equipamentos para estoque: {e}")
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_placas_equipamentos():
+    url_login = "http://apiv1.1gps.com.br/seguranca/logon"
+    payload_login = {
+        "username": os.getenv('MULTI_LOGIN'),
+        "password": os.getenv('MULTI_PASSWORD'),
+        "appid": 1202,
+        "token": None,
+        "expiration": None
+    }
+    headers_login = {
+        "Content-Type": "application/json"
+    }
+
+    response_login = requests.post(url_login, json=payload_login, headers=headers_login)
+
+    if response_login.status_code == 200:
+        token = response_login.json()["object"]["token"]
+        headers_veiculos = {
+            "Content-Type": "application/json",
+            "token": token
+        }
+        url_veiculos = "http://apiv1.1gps.com.br/veiculos"
+        response_veiculos = requests.post(url_veiculos, headers=headers_veiculos)
+
+        if response_veiculos.status_code == 200:
+            veiculos = response_veiculos.json()["object"]
+            return [
+                {
+                    "placa": veiculo["placa"], 
+                    "numero": veiculo["dispositivos"][0]["numero"]
+                } 
+                for veiculo in veiculos if veiculo["dispositivos"]
+            ]
+        else:
+            print(f"Erro ao buscar veículos: {response_veiculos.status_code}")
+            return []
+    else:
+        print(f"Erro ao fazer login: {response_login.status_code}")
+        return []
+
+def comparar_equipamentos_com_placas():
+    placas_equipamentos = listar_placas_equipamentos()
+    if not placas_equipamentos:
+        return
+
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("SELECT id_equipamento, status FROM equipamentos WHERE status != 'INSTALADO'")
+        equipamentos = cursor.fetchall()
+        ids_equipamentos = {equip[0]: equip[1] for equip in equipamentos}
+
+        for item in placas_equipamentos:
+            numero = item["numero"]
+            if numero in ids_equipamentos and ids_equipamentos[numero] != 'EM ESTOQUE':
+                tecnico = ids_equipamentos[numero]
+                cursor.execute("""
+                    UPDATE equipamentos
+                    SET status = 'INSTALADO'
+                    WHERE id_equipamento = %s
+                """, (numero,))
+                cursor.execute("""
+                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (numero, tecnico, "INSTALADO", datetime.now(), "Instalação", f"Equipamento instalado no veículo com placa {item['placa']}"))
+        conexao.commit()
+    except Exception as e:
+        print(f"Erro ao atualizar equipamentos: {e}")
+    finally:
+        cursor.close()
+        conexao.close()
+
 # Configurar o agendador
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
-scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
+scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1, max_instances=1)
+scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
+scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
 scheduler.start()
 
 if __name__ == "__main__":
