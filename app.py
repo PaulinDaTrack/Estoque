@@ -8,7 +8,6 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from flask_caching import Cache
-from apscheduler.job import job
 
 load_dotenv()
 
@@ -823,7 +822,6 @@ def comparar_equipamentos():
     else:
         print(f"Erro na autenticação: {auth_response.status_code}, {auth_response.text}")
 
-@job
 def verificar_equipamentos_fulltrack():
     url = "https://ws.fulltrack2.com/trackers/all"
     headers = {
