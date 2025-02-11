@@ -87,24 +87,26 @@
 <body>
     <div class="container">
         <h2>VISUALIZAR ESTOQUE</h2>
-        <table class="table table-striped" id="status-table">
-            <thead>
-                <tr>
-                    <th>Local</th>
-                    <th>Quantidade</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for status, quantidade in resultados %}
-                <tr class="status-row">
-                    <td>
-                        <button class="status-btn" onclick="mostrarDetalhes('{{ status }}')">{{ status }}</button>
-                    </td>
-                    <td>{{ quantidade }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-striped" id="status-table">
+                <thead>
+                    <tr>
+                        <th>Local</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for status, quantidade in resultados %}
+                    <tr class="status-row">
+                        <td>
+                            <button class="status-btn" onclick="mostrarDetalhes('{{ status }}')">{{ status }}</button>
+                        </td>
+                        <td>{{ quantidade }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         <div id="detalhes" class="mt-4" style="display: none;">
             <h3>Detalhes</h3>
             <button class="btn btn-secondary mb-2" onclick="toggleFilterMenu()">Mostrar/Esconder Filtros</button>
@@ -226,13 +228,13 @@
                     data.forEach(equip => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td>${equip.id_equipamento}</td>
-                            <td>${equip.modelo}</td>
-                            <td>${equip.chip}</td>
-                            <td>${equip.operadora}</td>
-                            <td>${equip.imei}</td>
-                            <td>${equip.orgao}</td>
-                            <td>${equip.observacao}</td>
+                            <td>${equip.id_equipamento || 'Nenhum'}</td>
+                            <td>${equip.modelo || 'Nenhum'}</td>
+                            <td>${equip.chip || 'Nenhum'}</td>
+                            <td>${equip.operadora || 'Nenhum'}</td>
+                            <td>${equip.imei || 'Nenhum'}</td>
+                            <td>${equip.orgao || 'Nenhum'}</td>
+                            <td>${equip.observacao || 'Nenhum'}</td>
                         `;
                         detalhesList.appendChild(tr);
                     });
@@ -253,13 +255,13 @@
                         data.forEach(equip => {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
-                                <td>${equip.id_equipamento}</td>
-                                <td>${equip.modelo}</td>
-                                <td>${equip.chip}</td>
-                                <td>${equip.operadora}</td>
-                                <td>${equip.imei}</td>
-                                <td>${equip.orgao}</td>
-                                <td>${equip.observacao}</td>
+                                <td>${equip.id_equipamento || 'Nenhum'}</td>
+                                <td>${equip.modelo || 'Nenhum'}</td>
+                                <td>${equip.chip || 'Nenhum'}</td>
+                                <td>${equip.operadora || 'Nenhum'}</td>
+                                <td>${equip.imei || 'Nenhum'}</td>
+                                <td>${equip.orgao || 'Nenhum'}</td>
+                                <td>${equip.observacao || 'Nenhum'}</td>
                             `;
                             detalhesList.appendChild(tr);
                         });

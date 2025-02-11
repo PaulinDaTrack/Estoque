@@ -765,7 +765,7 @@ def comparar_equipamentos():
     auth_response = requests.post(auth_url, params=auth_params)
 
     # Verificar se a autenticação foi bem-sucedida
-    if (auth_response.status_code == 200):
+    if auth_response.status_code == 200:
         auth_data = auth_response.json()
         access_token = auth_data.get("AccessToken")
 
@@ -785,7 +785,7 @@ def comparar_equipamentos():
         tracker_response = requests.post(tracker_url, json=payload, headers=headers)
 
         # Verificar a resposta
-        if (tracker_response.status_code == 200):
+        if tracker_response.status_code == 200:
             tracker_data = tracker_response.json()
             ids_tracker = [item.get('IdTracker') for item in tracker_data if item.get('TrackedUnitType') == 1]
 
@@ -963,14 +963,14 @@ def comparar_equipamentos_com_placas():
 # Configurar o agendador
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
-scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1, max_instances=1)
+scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
 scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
-scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1, max_instances=1)
+scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
 scheduler.start()
 
 if __name__ == "__main__":
     try:
         app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False)
     except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown(wait=False)
+        scheduler.shutdown()
 
