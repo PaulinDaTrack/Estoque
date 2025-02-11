@@ -965,12 +965,12 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
 scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1, max_instances=1)
 scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
-scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
+scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1, max_instances=1)
 scheduler.start()
 
 if __name__ == "__main__":
     try:
         app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False)
     except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+        scheduler.shutdown(wait=False)
 
