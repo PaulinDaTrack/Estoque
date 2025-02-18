@@ -263,7 +263,7 @@ def transferir_tecnico_para_outro():
             conexao = conectar_banco()
             cursor = conexao.cursor()
             tecnico_origem = request.form['tecnico_origem']
-            ids_equipamentos = request.form.getlist('id_equipamento')
+            ids_equipamentos = request.form['id_equipamento'].split(';')
             acao = request.form['acao']
             tecnico_destino = request.form.get('tecnico_destino')
 
@@ -765,7 +765,7 @@ def comparar_equipamentos():
     auth_response = requests.post(auth_url, params=auth_params)
 
     # Verificar se a autenticação foi bem-sucedida
-    if auth_response.status_code == 200:
+    if (auth_response.status_code == 200):
         auth_data = auth_response.json()
         access_token = auth_data.get("AccessToken")
 
@@ -785,7 +785,7 @@ def comparar_equipamentos():
         tracker_response = requests.post(tracker_url, json=payload, headers=headers)
 
         # Verificar a resposta
-        if tracker_response.status_code == 200:
+        if (tracker_response.status_code == 200):
             tracker_data = tracker_response.json()
             ids_tracker = [item.get('IdTracker') for item in tracker_data if item.get('TrackedUnitType') == 1]
 

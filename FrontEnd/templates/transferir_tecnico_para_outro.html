@@ -216,6 +216,9 @@
                 erroSelecao.textContent = 'Você deve selecionar no mínimo 1 e no máximo 20 equipamentos.';
                 return false;
             }
+            // Adicionar os IDs dos equipamentos selecionados ao campo de texto
+            var ids = Array.from(selecionados).map(cb => cb.value).join('; ');
+            document.getElementById('id_equipamento').value = ids;
             erroSelecao.textContent = '';
             return true;
         }
@@ -237,6 +240,9 @@
                     cb.checked = false;
                 }
             });
+            // Atualizar o campo de texto com os IDs selecionados
+            var selecionados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value).join('; ');
+            document.getElementById('id_equipamento').value = selecionados;
         }
 
         function adicionarPontoVirgula(event) {
