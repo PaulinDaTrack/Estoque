@@ -872,22 +872,6 @@ def verificar_equipamentos_fulltrack():
     except requests.exceptions.JSONDecodeError:
         print("Erro: A resposta não está em formato JSON válido.", response.text)
 
-def mover_para_estoque():
-    try:
-        conexao = conectar_banco()
-        cursor = conexao.cursor()
-        cursor.execute("""
-            UPDATE equipamentos
-            SET status = 'EM ESTOQUE'
-            WHERE status = 'PARA TESTAR' AND DATE_ADD(data_movimentacao, INTERVAL 3 DAY) <= NOW()
-        """)
-        conexao.commit()
-    except Exception as e:
-        print(f"Erro ao mover equipamentos para estoque: {e}")
-    finally:
-        cursor.close()
-        conexao.close()
-
 def listar_placas_equipamentos():
     url_login = "http://apiv1.1gps.com.br/seguranca/logon"
     payload_login = {
@@ -960,11 +944,36 @@ def comparar_equipamentos_com_placas():
         cursor.close()
         conexao.close()
 
+@app.route('/mover_para_estoque_manual', methods=['POST'])
+def mover_para_estoque_manual():
+    id_equipamento = request.args.get('id_equipamento')
+    data = request.get_json()
+    observacao = data.get('observacao')
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("""
+            UPDATE equipamentos
+            SET status = 'EM ESTOQUE', observacao = %s
+            WHERE id_equipamento = %s AND status = 'PARA TESTAR'
+        """, (observacao, id_equipamento))
+        conexao.commit()
+        if cursor.rowcount > 0:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Equipamento não encontrado ou status inválido"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conexao.close()
+
 # Configurar o agendador
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
 scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
-scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
+# Remover o job agendado para mover equipamentos "PARA TESTAR" para "EM ESTOQUE"
+# scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
 scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
 scheduler.start()
 

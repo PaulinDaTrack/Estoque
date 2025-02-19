@@ -157,6 +157,7 @@
                             <th>IMEI</th>
                             <th>Órgão</th>
                             <th>Observação</th>
+                            <th id="extra-column" style="display: none;"></th> <!-- Coluna vazia -->
                         </tr>
                     </thead>
                     <tbody id="detalhes-list">
@@ -249,9 +250,15 @@
                     const detalhesDiv = document.getElementById('detalhes');
                     const detalhesList = document.getElementById('detalhes-list');
                     const statusTable = document.getElementById('status-table');
+                    const extraColumn = document.getElementById('extra-column');
                     statusTable.style.display = 'none';
                     detalhesList.innerHTML = '';
                     if (data.length > 0) {
+                        if (status === 'PARA TESTAR') {
+                            extraColumn.style.display = 'table-cell';
+                        } else {
+                            extraColumn.style.display = 'none';
+                        }
                         data.forEach(equip => {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
@@ -261,7 +268,10 @@
                                 <td>${equip.operadora || 'Nenhum'}</td>
                                 <td>${equip.imei || 'Nenhum'}</td>
                                 <td>${equip.orgao || 'Nenhum'}</td>
-                                <td>${equip.observacao || 'Nenhum'}</td>
+                                <td>
+                                    ${status === 'PARA TESTAR' ? `<input type="text" value="${equip.observacao || ''}" id="observacao-${equip.id_equipamento}">` : equip.observacao || 'Nenhum'}
+                                </td>
+                                ${status === 'PARA TESTAR' ? `<td><button class="btn btn-success" onclick="moverParaEstoque('${equip.id_equipamento}')">Mover para Estoque</button></td>` : ''}
                             `;
                             detalhesList.appendChild(tr);
                         });
@@ -288,6 +298,27 @@
         function toggleFilterMenu() {
             const filterMenu = document.getElementById('filter-menu');
             filterMenu.classList.toggle('show');
+        }
+
+        function moverParaEstoque(idEquipamento) {
+            const observacao = document.getElementById(`observacao-${idEquipamento}`).value;
+            fetch(`/mover_para_estoque_manual?id_equipamento=${idEquipamento}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ observacao })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Equipamento movido para estoque com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao mover equipamento para estoque.');
+                }
+            })
+            .catch(error => console.error('Erro ao mover equipamento para estoque:', error));
         }
     </script>
 </body>

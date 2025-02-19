@@ -113,3 +113,20 @@ html, body {
     vertical-align: middle;
 }
 
+.form-control {
+    background-color: transparent;
+    color: white;
+    border: 1px solid white;
+    font-family: Andale Mono, monospace;
+}
+
+.detalhes-table-container input[type="text"] {
+    background-color: transparent;
+    color: white;
+    border: 1px solid white;
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: Andale Mono, monospace;
+}
+
