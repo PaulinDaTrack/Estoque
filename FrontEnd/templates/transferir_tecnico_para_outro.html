@@ -148,7 +148,7 @@
                 <form method="POST" action="{{ url_for('transferir_tecnico_para_outro') }}" onsubmit="return validarSelecao()" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                     <div class="form-group">
                         <label for="tecnico_origem">Técnico de Origem:</label>
-                        <select name="tecnico_origem" id="tecnico_origem" class="form-control">
+                        <select name="tecnico_origem" id="tecnico_origem" class="form-control" onchange="atualizarEquipamentosDisponiveis()">
                             {% for tecnico in tecnicos %}
                             <option value="{{ tecnico }}">{{ tecnico }}</option>
                             {% endfor %}
@@ -260,7 +260,7 @@
             fetch(`/equipamentos_com_tecnico?tecnico=${tecnicoOrigem}`)
                 .then(response => response.json())
                 .then(data => {
-                    const equipamentosDisponiveis = document.getElementById('equipamentos_disponiveis');
+                    const equipamentosDisponiveis = document.getElementById('ids_equipamentos');
                     equipamentosDisponiveis.innerHTML = '';
                     data.forEach(id => {
                         const div = document.createElement('div');
@@ -272,6 +272,24 @@
                 })
                 .catch(error => console.error('Erro ao buscar equipamentos:', error));
         });
+
+        function atualizarEquipamentosDisponiveis() {
+            const tecnicoOrigem = document.getElementById('tecnico_origem').value;
+            fetch(`/equipamentos_com_tecnico?tecnico=${tecnicoOrigem}`)
+                .then(response => response.json())
+                .then(data => {
+                    const equipamentosDisponiveis = document.getElementById('ids_equipamentos');
+                    equipamentosDisponiveis.innerHTML = '';
+                    data.forEach(id => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check';
+                        div.innerHTML = `<input class="form-check-input" type="checkbox" name="ids_equipamentos[]" value="${id}" id="equip${id}">
+                                         <label class="form-check-label" for="equip${id}">${id}</label>`;
+                        equipamentosDisponiveis.appendChild(div);
+                    });
+                })
+                .catch(error => console.error('Erro ao buscar equipamentos:', error));
+        }
     </script>
 </body>
 </html>
