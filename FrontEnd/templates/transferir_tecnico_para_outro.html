@@ -155,9 +155,15 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="id_equipamento">ID do Equipamento:</label>
-                        <input type="text" name="id_equipamento" id="id_equipamento" class="form-control" placeholder="Digite os IDs dos equipamentos separados por ponto e vírgula" oninput="filtrarEquipamentos()" onkeydown="adicionarPontoVirgula(event)">
-                        <div id="equipamentos_disponiveis" class="scrollable-menu">
+                        <label for="pesquisar_equipamento">Pesquisar Equipamento</label>
+                        <input type="text" class="form-control" id="pesquisar_equipamento" onkeyup="filtrarEquipamentos()" placeholder="Digite para pesquisar ou IDs separados por ponto e vírgula...">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="select_all" onclick="selecionarTodos()">
+                            <label class="form-check-label" for="select_all">Selecionar Todos</label>
+                        </div>
+                        <div id="ids_equipamentos" class="scrollable-menu">
                             {% for id in ids_equipamentos %}
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="ids_equipamentos[]" value="{{ id }}" id="equip{{ id }}">
@@ -230,7 +236,7 @@
         }
 
         function filtrarEquipamentos() {
-            var input = document.getElementById('id_equipamento').value;
+            var input = document.getElementById('pesquisar_equipamento').value;
             var ids = input.split(';').map(id => id.trim());
             var checkboxes = document.querySelectorAll('input[name="ids_equipamentos[]"]');
             checkboxes.forEach(cb => {
@@ -240,18 +246,14 @@
                     cb.checked = false;
                 }
             });
-            // Atualizar o campo de texto com os IDs selecionados
-            var selecionados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value).join('; ');
-            document.getElementById('id_equipamento').value = selecionados;
         }
 
-        function adicionarPontoVirgula(event) {
+        document.getElementById('pesquisar_equipamento').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                const input = document.getElementById('id_equipamento');
-                input.value += '; ';
+                this.value += ';';
             }
-        }
+        });
 
         document.getElementById('tecnico_origem').addEventListener('change', function() {
             const tecnicoOrigem = this.value;

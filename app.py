@@ -263,7 +263,7 @@ def transferir_tecnico_para_outro():
             conexao = conectar_banco()
             cursor = conexao.cursor()
             tecnico_origem = request.form['tecnico_origem']
-            ids_equipamentos = request.form['id_equipamento'].split(';')
+            ids_equipamentos = request.form.getlist('ids_equipamentos[]')
             acao = request.form['acao']
             tecnico_destino = request.form.get('tecnico_destino')
 
