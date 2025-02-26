@@ -147,15 +147,14 @@ def before_request():
 @app.route('/cadastrar_equipamento', methods=['GET', 'POST'])
 def cadastrar_equipamento():
     if request.method == 'POST':
-        id_equipamento = request.form['id_equipamento']
-        if not id_equipamento:
-            flash("ID do Equipamento é obrigatório!", "danger")
+        ids_equipamentos = request.form['id_equipamento']
+        if not ids_equipamentos:
+            flash("IDs dos Equipamentos são obrigatórios!", "danger")
             return redirect(url_for('cadastrar_equipamento'))
         try:
             conexao = conectar_banco()
             cursor = conexao.cursor()
-            
-            id_equipamento = int(id_equipamento)
+            ids_equipamentos = [int(id.strip()) for id in ids_equipamentos.split(';') if id.strip()]
             modelo = request.form['modelo']
             imei = request.form['imei']
             observacao = request.form['observacao']
@@ -167,16 +166,17 @@ def cadastrar_equipamento():
             # Verificar se o campo imei não está vazio antes de converter para int
             imei = int(imei) if imei else None
 
-            query = '''
-                INSERT INTO equipamentos (id_equipamento, modelo, chip, operadora, imei, status, orgao, observacao)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            '''
-            valores = (id_equipamento, modelo, chip, operadora, imei, status, orgao, observacao)
-            cursor.execute(query, valores)
+            for id_equipamento in ids_equipamentos:
+                query = '''
+                    INSERT INTO equipamentos (id_equipamento, modelo, chip, operadora, imei, status, orgao, observacao)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                '''
+                valores = (id_equipamento, modelo, chip, operadora, imei, status, orgao, observacao)
+                cursor.execute(query, valores)
             conexao.commit()
-            flash("Equipamento cadastrado com sucesso!", "success")
+            flash("Equipamentos cadastrados com sucesso!", "success")
         except Exception as e:
-            flash(f"Erro ao cadastrar equipamento: {e}", "danger")
+            flash(f"Erro ao cadastrar equipamentos: {e}", "danger")
         finally:
             cursor.close()
             conexao.close()
