@@ -1,15 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_from_directory
 import mysql.connector
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import requests
 import random
 import os
+import time
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from flask_caching import Cache
 
 load_dotenv()
+TIMEZONE = timezone(timedelta(hours=-4))  # Definindo fuso horário GMT-4
 
 app = Flask(__name__, template_folder='FrontEnd/templates', static_folder='FrontEnd/static')
 app.secret_key = 'your_secret_key'
@@ -243,7 +245,7 @@ def transferir_estoque_para_tecnico():
                 cursor.execute("""
                     INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                     VALUES (%s, %s, %s, %s, %s, %s)
-                """, (id_equipamento, "Estoque", tecnico_destino, datetime.now(), "Transferência", observacao))
+                """, (id_equipamento, "Estoque", tecnico_destino, datetime.now(TIMEZONE), "Transferência", observacao))
             conexao.commit()
             flash("Transferência registrada com sucesso!", "success")
         except Exception as e:
@@ -278,7 +280,7 @@ def transferir_tecnico_para_outro():
                     cursor.execute("""
                         INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                         VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (id_equipamento, tecnico_origem, destino, datetime.now(), "Envio para teste", "Enviado para teste"))
+                    """, (id_equipamento, tecnico_origem, destino, datetime.now(TIMEZONE), "Envio para teste", "Enviado para teste"))
                 else:
                     destino = tecnico_destino
                     cursor.execute("""
@@ -289,7 +291,7 @@ def transferir_tecnico_para_outro():
                     cursor.execute("""
                         INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                         VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (id_equipamento, tecnico_origem, destino, datetime.now(), "Transferência", "Transferido para outro técnico"))
+                    """, (id_equipamento, tecnico_origem, destino, datetime.now(TIMEZONE), "Transferência", "Transferido para outro técnico"))
 
             conexao.commit()
             flash("Transferência realizada com sucesso!", "success")
@@ -756,13 +758,13 @@ def datetimeformat(value):
 def comparar_equipamentos():
     # URL para obter o token
     auth_url = "https://integration.systemsatx.com.br/Login"
-    auth_params = {
+    payload_login = {
         "Username": os.getenv('SSX_USERNAME'),
         "Password": os.getenv('SSX_PASSWORD')
     }
 
     # Fazer a requisição para obter o token
-    auth_response = requests.post(auth_url, params=auth_params)
+    auth_response = requests.post(auth_url, params=payload_login)
 
     # Verificar se a autenticação foi bem-sucedida
     if (auth_response.status_code == 200):
@@ -808,7 +810,7 @@ def comparar_equipamentos():
                             cursor.execute("""
                                 INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                                 VALUES (%s, %s, %s, %s, %s, %s)
-                            """, (id_tracker, tecnico, "INSTALADO", datetime.now(), "Instalação", "Equipamento instalado"))
+                            """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
                     conexao.commit()
                 except Exception as e:
                     print(f"Erro ao atualizar equipamentos: {e}")
@@ -851,7 +853,8 @@ def verificar_equipamentos_fulltrack():
                     cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (ras_ras_id_aparelho,))
                     equipamento = cursor.fetchone()
 
-                    if equipamento and equipamento[0] != 'INSTALADO':
+                    # Atualizar somente se o status não for 'INSTALADO' nem 'EM ESTOQUE'
+                    if equipamento and equipamento[0] != 'INSTALADO' and equipamento[0] != 'EM ESTOQUE':
                         tecnico = equipamento[0]
                         cursor.execute("""
                             UPDATE equipamentos
@@ -861,7 +864,7 @@ def verificar_equipamentos_fulltrack():
                         cursor.execute("""
                             INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                             VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(), "Instalação", "Equipamento instalado"))
+                        """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
 
             conexao.commit()
             cursor.close()
@@ -872,7 +875,10 @@ def verificar_equipamentos_fulltrack():
     except requests.exceptions.JSONDecodeError:
         print("Erro: A resposta não está em formato JSON válido.", response.text)
 
+placas_prev = set()  # Declarar variável global para armazenar os números anteriores
+
 def listar_placas_equipamentos():
+    global placas_prev
     url_login = "http://apiv1.1gps.com.br/seguranca/logon"
     payload_login = {
         "username": os.getenv('MULTI_LOGIN'),
@@ -881,36 +887,41 @@ def listar_placas_equipamentos():
         "token": None,
         "expiration": None
     }
-    headers_login = {
-        "Content-Type": "application/json"
-    }
-
-    response_login = requests.post(url_login, json=payload_login, headers=headers_login)
-
-    if response_login.status_code == 200:
-        token = response_login.json()["object"]["token"]
-        headers_veiculos = {
-            "Content-Type": "application/json",
-            "token": token
-        }
-        url_veiculos = "http://apiv1.1gps.com.br/veiculos"
-        response_veiculos = requests.post(url_veiculos, headers=headers_veiculos)
-
-        if response_veiculos.status_code == 200:
-            veiculos = response_veiculos.json()["object"]
-            return [
-                {
-                    "placa": veiculo["placa"], 
-                    "numero": veiculo["dispositivos"][0]["numero"]
-                } 
-                for veiculo in veiculos if veiculo["dispositivos"]
-            ]
-        else:
-            print(f"Erro ao buscar veículos: {response_veiculos.status_code}")
-            return []
-    else:
+    headers_login = {"Content-Type": "application/json"}
+    try:
+        response_login = requests.post(url_login, json=payload_login, headers=headers_login, timeout=10)
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao fazer login: {e}")
+        return []  # Retornar lista vazia em caso de erro
+    if response_login.status_code != 200:
         print(f"Erro ao fazer login: {response_login.status_code}")
         return []
+    token = response_login.json()["object"].get("token")
+    if not token:
+        print("Token não encontrado.")
+        return []
+    headers_veiculos = {
+        "Content-Type": "application/json",
+        "token": token
+    }
+    url_veiculos = "http://apiv1.1gps.com.br/veiculos"
+    try:
+        response_veiculos = requests.post(url_veiculos, headers=headers_veiculos, timeout=10)
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao buscar veículos: {e}")
+        return []
+    if response_veiculos.status_code != 200:
+        print(f"Erro ao buscar veículos: {response_veiculos.status_code}")
+        return []
+    veiculos = response_veiculos.json()["object"]
+    current_numbers = {v["dispositivos"][0]["numero"] for v in veiculos if v["dispositivos"]}
+    if current_numbers - placas_prev:
+        comparar_equipamentos_com_placas()
+    placas_prev = current_numbers
+    return [
+        {"placa": v["placa"], "numero": v["dispositivos"][0]["numero"]}
+        for v in veiculos if v["dispositivos"]
+    ]
 
 def comparar_equipamentos_com_placas():
     placas_equipamentos = listar_placas_equipamentos()
@@ -936,10 +947,43 @@ def comparar_equipamentos_com_placas():
                 cursor.execute("""
                     INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                     VALUES (%s, %s, %s, %s, %s, %s)
-                """, (numero, tecnico, "INSTALADO", datetime.now(), "Instalação", f"Equipamento instalado no veículo com placa {item['placa']}"))
+                """, (numero, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", f"Equipamento instalado no veículo com placa {item['placa']}"))
         conexao.commit()
     except Exception as e:
         print(f"Erro ao atualizar equipamentos: {e}")
+    finally:
+        cursor.close()
+        conexao.close()
+
+def process_service_orders():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM ordens_servico WHERE status = 'DESINSTALADO' AND processado = 0")
+        ordens = cursor.fetchall()
+        for ordem in ordens:
+            equipamentoId = ordem["equipamentoId"]
+            # Verificar se o equipamento existe
+            cursor.execute("SELECT COUNT(*) AS c FROM equipamentos WHERE id_equipamento = %s", (equipamentoId,))
+            if cursor.fetchone()['c'] == 0:
+                print(f"Equipamento {equipamentoId} não encontrado. Pulando esta OS.")
+                cursor.execute("UPDATE ordens_servico SET processado = 1 WHERE id = %s", (ordem["id"],))
+                continue
+
+            tecnico = ordem["nomeTecnico"]
+            primeiro_nome = tecnico.split()[0] if tecnico else tecnico
+            update_query = "UPDATE equipamentos SET status = %s WHERE id_equipamento = %s"
+            cursor.execute(update_query, (primeiro_nome, equipamentoId))
+            insert_mov_query = """
+                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            observacao = f"Equipamento desinstalado e retornou para o estoque de {primeiro_nome}"
+            cursor.execute(insert_mov_query, (equipamentoId, "DESINSTALADO", primeiro_nome, datetime.now(TIMEZONE), "Desinstalação", observacao))
+            cursor.execute("UPDATE ordens_servico SET processado = 1 WHERE id = %s", (ordem["id"],))
+        conexao.commit()
+    except Exception as e:
+        print(f"Erro ao processar ordens de serviço: {e}")
     finally:
         cursor.close()
         conexao.close()
@@ -968,6 +1012,157 @@ def mover_para_estoque_manual():
         cursor.close()
         conexao.close()
 
+# Início da integração do script ordens.py
+
+def token_expirado(data_expiracao_dt):
+    return datetime.now(TIMEZONE) >= data_expiracao_dt
+
+def obter_token():
+    url_token = "https://api-hc.harmonit.com.br:8086/Account/Token"
+    params_token = {
+        "clientId": os.getenv('HC_KEY'),
+        "secretId": os.getenv('HC_SECRET')
+    }
+    max_tentativas = 3
+    for tentativa in range(1, max_tentativas + 1):
+        try:
+            response_token = requests.get(url_token, params=params_token, timeout=10)
+            # Log para diagnóstico
+            print(f"DEBUG: Tentativa {tentativa} - Status: {response_token.status_code}, Body: {response_token.text}")
+            if response_token.status_code == 200:
+                data = response_token.json()
+                token = data["data"]["token"]
+                data_expiracao_str = data["data"]["dataExpiracao"]
+                # Converter para datetime e torná-lo aware com TIMEZONE
+                data_expiracao_dt = datetime.strptime(data_expiracao_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=TIMEZONE)
+                print(f"✅ Token gerado! Expira em: {data_expiracao_dt}")
+                return token, data_expiracao_dt
+            else:
+                print(f"⚠️ Erro obtendo token: {response_token.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Erro de conexão: {e}. Tentativa {tentativa}")
+            time.sleep(5)
+    print("🚨 Falha ao obter o token após várias tentativas.")
+    return None, None
+
+def buscar_ultima_os_bd():
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
+    )
+    cursor = conn.cursor()
+    cursor.execute("SELECT MAX(CAST(numero_os AS UNSIGNED)) FROM ordens_servico")
+    result = cursor.fetchone()[0]
+    conn.close()
+    return result if result is not None else 0
+
+def os_existe_no_banco(numero_os):
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
+    )
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM ordens_servico WHERE numero_os = %s", (numero_os,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return exists
+
+def inserir_ordem_servico_no_banco(ordem_servico, numero_os):
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
+    )
+    cursor = conn.cursor()
+    create_table_query = '''
+    CREATE TABLE IF NOT EXISTS ordens_servico (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        numero_os VARCHAR(255) NOT NULL,
+        nomeTecnico VARCHAR(255) NOT NULL,
+        equipamentoId VARCHAR(255) NOT NULL,
+        veiculoPlaca VARCHAR(255) NOT NULL,
+        status VARCHAR(255) NOT NULL,
+        processado TINYINT DEFAULT 0
+    )
+    '''
+    cursor.execute(create_table_query)
+    conn.commit()
+    insert_query = '''
+    INSERT INTO ordens_servico (numero_os, nomeTecnico, equipamentoId, veiculoPlaca, status)
+    VALUES (%s, %s, %s, %s, %s)
+    '''
+    if ordem_servico.get('oficina'):
+        oficinas = ordem_servico['oficina']
+        oficina_selecionada = None
+        for oficina in reversed(oficinas):
+            if oficina.get('status') == 2:
+                oficina_selecionada = oficina
+                break
+        if not oficina_selecionada:
+            oficina_selecionada = oficinas[-1]
+        tecnico = ordem_servico.get('tecnico', [])
+        nomeTecnico = tecnico[0].get('nomeTecnico') if tecnico else None
+        equipamentoId = oficina_selecionada.get('equipamentoId')
+        veiculoPlaca = oficina_selecionada.get('veiculoPlaca')
+        raw_status = oficina_selecionada.get('status')
+        if raw_status == 1:
+            status = "INSTALADO"
+        elif raw_status == 2:
+            status = "DESINSTALADO"
+        else:
+            status = raw_status
+        if numero_os and nomeTecnico and equipamentoId and veiculoPlaca and status:
+            data_tuple = (numero_os, nomeTecnico, equipamentoId, veiculoPlaca, status)
+            cursor.execute(insert_query, data_tuple)
+    conn.commit()
+    conn.close()
+
+def obter_e_inserir_ultimas_os(token, data_expiracao_dt):
+    ultima_bd = buscar_ultima_os_bd()
+    # Verificar somente as próximas 25 OS
+    inicio = ultima_bd + 1
+    fim = ultima_bd + 25
+    for numero_os in range(inicio, fim + 1):
+        if os_existe_no_banco(str(numero_os)):
+            continue
+        url_os = f"https://api-hc.harmonit.com.br:8086/OrdemServico/ObterOrdemServicoPorNumero?numeroOs={numero_os}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        if token_expirado(data_expiracao_dt):
+            print("🔄 O token expirou! Obtendo novo token...")
+            token, data_expiracao_dt = obter_token()
+            headers["Authorization"] = f"Bearer {token}"
+        response_os = requests.get(url_os, headers=headers)
+        if response_os.status_code == 200:
+            data_os = response_os.json()
+            inserir_ordem_servico_no_banco(data_os["data"], str(numero_os))
+            print(f"✅ OS {numero_os} inserida.")
+        else:
+            print(f"❌ Falha ao obter OS {numero_os}: {response_os.status_code}")
+        time.sleep(1)
+
+def process_ordens():
+    token, data_expiracao_dt = obter_token()
+    if token:
+        obter_e_inserir_ultimas_os(token, data_expiracao_dt)
+
+def process_all_ordens():
+    # Obter token e inserir novas OS
+    token, data_expiracao_dt = obter_token()
+    if token:
+        obter_e_inserir_ultimas_os(token, data_expiracao_dt)
+    # Processar as OS já inseridas que ainda não foram processadas
+    process_service_orders()
+
+# Fim da integração do script ordens.py
+
 # Configurar o agendador
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
@@ -975,6 +1170,8 @@ scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", min
 # Remover o job agendado para mover equipamentos "PARA TESTAR" para "EM ESTOQUE"
 # scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
 scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
+scheduler.add_job(func=process_all_ordens, trigger="cron", hour=6)
+
 scheduler.start()
 
 if __name__ == "__main__":

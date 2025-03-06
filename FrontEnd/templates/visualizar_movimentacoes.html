@@ -92,48 +92,56 @@
         <div class="frame">
             <h2>VISUALIZAR MOVIMENTAÇÕES</h2>
             <form method="GET" action="{{ url_for('visualizar_movimentacoes') }}">
-                <div class="filter-menu">
-                    <div class="form-group">
-                        <label for="id_equipamento_filtro">ID Equipamento:</label>
-                        <input type="text" name="id_equipamento_filtro" class="form-control" value="{{ request.args.get('id_equipamento_filtro', '') }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="origem_filtro">Origem:</label>
-                        <select name="origem_filtro" class="form-control">
-                            <option value="">Todos</option>
-                            {% for origem in origens %}
-                            <option value="{{ origem }}" {% if request.args.get('origem_filtro') == origem %}selected{% endif %}>{{ origem }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="destino_filtro">Destino:</label>
-                        <select name="destino_filtro" class="form-control">
-                            <option value="">Todos</option>
-                            {% for destino in destinos %}
-                            <option value="{{ destino }}" {% if request.args.get('destino_filtro') == destino %}selected{% endif %}>{{ destino }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="data_filtro">Data:</label>
-                        <input type="date" name="data_filtro" class="form-control" value="{{ request.args.get('data_filtro', '') }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="tipo_filtro">Tipo:</label>
-                        <select name="tipo_filtro" class="form-control">
-                            <option value="">Todos</option>
-                            {% for tipo in tipos %}
-                            <option value="{{ tipo }}" {% if request.args.get('tipo_filtro') == tipo %}selected{% endif %}>{{ tipo }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group-buttons">
-                        <button type="submit" class="btn btn-primary">Filtrar</button>
-                        <a href="{{ url_for('visualizar_movimentacoes') }}" class="btn btn-secondary">Limpar</a>
-                    </div>
+                <button class="btn btn-secondary mb-2" type="button" onclick="toggleFilterMenu()">Mostrar/Esconder Filtros</button>
+                <div id="filter-menu" class="filter-menu" style="display: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="text" class="filter-input" name="id_equipamento_filtro" placeholder="Filtrar por ID" value="{{ request.args.get('id_equipamento_filtro', '') }}">
+                                </th>
+                                <th>
+                                    <select class="filter-select" name="origem_filtro">
+                                        <option value="">Filtrar por Origem</option>
+                                        {% for origem in origens %}
+                                        <option value="{{ origem }}" {% if request.args.get('origem_filtro') == origem %}selected{% endif %}>{{ origem }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </th>
+                                <th>
+                                    <select class="filter-select" name="destino_filtro">
+                                        <option value="">Filtrar por Destino</option>
+                                        {% for destino in destinos %}
+                                        <option value="{{ destino }}" {% if request.args.get('destino_filtro') == destino %}selected{% endif %}>{{ destino }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </th>
+                                <th>
+                                    <input type="date" class="filter-input" name="data_filtro" placeholder="Filtrar por Data" value="{{ request.args.get('data_filtro', '') }}">
+                                </th>
+                                <th>
+                                    <select class="filter-select" name="tipo_filtro">
+                                        <option value="">Filtrar por Tipo</option>
+                                        {% for tipo in tipos %}
+                                        <option value="{{ tipo }}" {% if request.args.get('tipo_filtro') == tipo %}selected{% endif %}>{{ tipo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </form>
+            <script>
+                function toggleFilterMenu() {
+                    var filterMenu = document.getElementById('filter-menu');
+                    if (filterMenu.style.display === 'none' || filterMenu.style.display === '') {
+                        filterMenu.style.display = 'block';
+                    } else {
+                        filterMenu.style.display = 'none';
+                    }
+                }
+            </script>
             <div class="scrollable-content">
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -163,12 +171,38 @@
                 </div>
             </div>
             <nav>
+                {% set start_page = 1 %}
+                {% set end_page = 10 %}
+                {% if total_pages > 10 %}
+                    {% if current_page > 6 %}
+                        {% set start_page = current_page - 5 %}
+                        {% set end_page = current_page + 4 %}
+                        {% if end_page > total_pages %}
+                            {% set end_page = total_pages %}
+                            {% set start_page = total_pages - 9 %}
+                            {% if start_page < 1 %}{% set start_page = 1 %}{% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+
                 <ul class="pagination">
-                    {% for page_num in range(1, total_pages + 1) %}
+                    {% if start_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('visualizar_movimentacoes', page=1) }}">1</a>
+                    </li>
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                    {% for page_num in range(start_page, end_page + 1) %}
                     <li class="page-item {% if page_num == current_page %}active{% endif %}">
                         <a class="page-link" href="{{ url_for('visualizar_movimentacoes', page=page_num) }}">{{ page_num }}</a>
                     </li>
                     {% endfor %}
+                    {% if end_page < total_pages %}
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('visualizar_movimentacoes', page=total_pages) }}">{{ total_pages }}</a>
+                    </li>
+                    {% endif %}
                 </ul>
             </nav>
 
