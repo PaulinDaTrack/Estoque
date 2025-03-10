@@ -315,6 +315,7 @@ def equipamentos_com_tecnico():
     equipamentos = listar_equipamentos_com_tecnico(tecnico)
     return jsonify(equipamentos)
 
+@cache.cached(timeout=30, key_prefix='visualizar_estoque')
 @app.route('/visualizar_estoque')
 def visualizar_estoque():
     try:
@@ -347,16 +348,21 @@ def detalhes_estoque():
 
 @app.route('/visualizar_movimentacoes')
 def visualizar_movimentacoes():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = 20
-        offset = (page - 1) * per_page
-        data_filtro = request.args.get('data_filtro')
-        origem_filtro = request.args.get('origem_filtro')
-        destino_filtro = request.args.get('destino_filtro')
-        tipo_filtro = request.args.get('tipo_filtro')
-        id_equipamento_filtro = request.args.get('id_equipamento_filtro')
+    page = request.args.get('page', 1, type=int)
+    # Recuperar filtros ou definir valor padrão
+    data_filtro = request.args.get('data_filtro') or ''
+    origem_filtro = request.args.get('origem_filtro') or ''
+    destino_filtro = request.args.get('destino_filtro') or ''
+    tipo_filtro = request.args.get('tipo_filtro') or ''
+    id_equipamento_filtro = request.args.get('id_equipamento_filtro') or ''
+    cache_key = f"mov_{data_filtro}_{origem_filtro}_{destino_filtro}_{tipo_filtro}_{id_equipamento_filtro}_{page}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
 
+    per_page = 20
+    offset = (page - 1) * per_page
+    try:
         conexao = conectar_banco()
         cursor = conexao.cursor()
 
@@ -416,7 +422,9 @@ def visualizar_movimentacoes():
     finally:
         cursor.close()
         conexao.close()
-    return render_template('visualizar_movimentacoes.html', resultados=resultados, total_pages=total_pages, current_page=page, data_filtro=data_filtro, origens=origens, destinos=destinos, tipos=tipos, id_equipamento_filtro=id_equipamento_filtro)
+    rendered = render_template('visualizar_movimentacoes.html', resultados=resultados, total_pages=total_pages, current_page=page, data_filtro=data_filtro, origens=origens, destinos=destinos, tipos=tipos, id_equipamento_filtro=id_equipamento_filtro)
+    cache.set(cache_key, rendered, timeout=60)
+    return rendered
 
 @app.route('/status_estoque')
 def status_estoque():
@@ -1182,7 +1190,7 @@ scheduler.start()
 
 if __name__ == "__main__":
     try:
-        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False)
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
+    finally:
+        scheduler.shutdown(wait=False)
 
