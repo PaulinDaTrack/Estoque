@@ -9,6 +9,7 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from flask_caching import Cache
+from mysql.connector import pooling  # Nova importação para pooling
 
 load_dotenv()
 TIMEZONE = timezone(timedelta(hours=-4))  # Definindo fuso horário GMT-4
@@ -20,13 +21,18 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 # Configuração do cache
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
+# Configurar pool de conexões
+dbconfig = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME'),
+}
+connection_pool = pooling.MySQLConnectionPool(pool_name="mypool", pool_size=5, **dbconfig)
+
+# Alterar a função de conexão para usar o pool
 def conectar_banco():
-    return mysql.connector.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_NAME')
-    )
+    return connection_pool.get_connection()
 
 def criar_tabela_usuarios():
     conexao = conectar_banco()
