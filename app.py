@@ -1177,15 +1177,13 @@ def process_all_ordens():
 
 # Fim da integração do script ordens.py
 
-# Configurar o agendador
-scheduler = BackgroundScheduler()
+# Configurar o agendador como daemon
+scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
 scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
-# Remover o job agendado para mover equipamentos "PARA TESTAR" para "EM ESTOQUE"
 # scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
 scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
 scheduler.add_job(func=process_all_ordens, trigger="cron", hour=6)
-
 scheduler.start()
 
 if __name__ == "__main__":
