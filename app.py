@@ -67,6 +67,18 @@ criar_tabela_usuarios()
 # Chamar a função para adicionar o usuário padrão ao iniciar a aplicação
 adicionar_usuario_padrao()
 
+def criar_indices():
+    conexao = conectar_banco()
+    cursor = conexao.cursor()
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_status ON equipamentos (status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_data_movimentacao ON movimentacoes (data_movimentacao)")
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+# Chamar a função para criar os índices ao iniciar a aplicação
+criar_indices()
+
 @cache.cached(timeout=60, key_prefix='listar_tecnicos')
 def listar_tecnicos():
     conexao = conectar_banco()
