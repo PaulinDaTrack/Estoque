@@ -70,6 +70,7 @@ adicionar_usuario_padrao()
 def criar_indices():
     conexao = conectar_banco()
     cursor = conexao.cursor()
+    cursor.execute("SET SESSION MAX_STATEMENT_TIME=300000")  # Aumentar o tempo máximo de execução para 300 segundos
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_status ON equipamentos (status)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_data_movimentacao ON movimentacoes (data_movimentacao)")
     conexao.commit()
