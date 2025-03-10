@@ -1190,5 +1190,9 @@ if __name__ == "__main__":
     try:
         app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
     finally:
-        scheduler.shutdown(wait=False)
+        if scheduler.running:
+            try:
+                scheduler.shutdown(wait=False)
+            except RuntimeError:
+                print("Scheduler já desligado.")
 
