@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import mysql.connector
 from datetime import datetime, timedelta, timezone
 import pandas as pd
+import atexit
 import requests
 import random
 import os
@@ -1202,6 +1203,9 @@ scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", min
 scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
 scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
 scheduler.start()
+
+# Garantir que o agendador seja desligado corretamente ao encerrar a aplicação
+atexit.register(lambda: scheduler.shutdown(wait=False))
 
 if __name__ == "__main__":
     try:
