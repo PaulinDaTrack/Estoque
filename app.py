@@ -923,7 +923,11 @@ def listar_placas_equipamentos():
     if response_login.status_code != 200:
         print(f"Erro ao fazer login: {response_login.status_code}")
         return []
-    token = response_login.json()["object"].get("token")
+    login_data = response_login.json().get("object")
+    if not login_data:
+        print("Dados de login não encontrados.")
+        return []
+    token = login_data.get("token")
     if not token:
         print("Token não encontrado.")
         return []
