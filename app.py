@@ -1196,7 +1196,7 @@ scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
 scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
 # scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
 scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
-scheduler.add_job(func=process_all_ordens, trigger="cron", hour=6)
+scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
 scheduler.start()
 
 if __name__ == "__main__":
