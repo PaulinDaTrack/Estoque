@@ -9,30 +9,33 @@
 </head>
 <body>
     <div class="container">
-        <h2>Cadastrar Equipamento no Portal FULLTRACK</h2>
-        <div class="form-frame">
-            <form method="POST">
-                <div class="form-group">
-                    <label for="ras_ras_id_aparelho">Numero de Serie</label>
-                    <input type="text" class="form-control" id="ras_ras_id_aparelho" name="ras_ras_id_aparelho" value="{{ ras_ras_id_aparelho }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="ras_ras_prd_id">Modelo</label>
-                    <select class="form-control" id="ras_ras_prd_id" name="ras_ras_prd_id" required>
-                        <option value="69">RST Mini - Sertec</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="ras_ras_chip">ICCID</label>
-                    <input type="number" class="form-control" id="ras_ras_chip" name="ras_ras_chip" value="{{ ras_ras_chip }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="ras_ras_imei">IMEI do Equipamento</label>
-                    <input type="text" class="form-control" id="ras_ras_imei" name="ras_ras_imei" value="{{ imei }}" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a href="{{ url_for('cadastrar_equipamentos_portal') }}" class="btn btn-danger">Voltar</a>
-            </form>
+        <!-- Adicionado content-box para padronização com o SSX -->
+        <div class="content-box">
+            <h2>Cadastrar Equipamento no Portal FULLTRACK</h2>
+            <div class="form-frame">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="ras_ras_id_aparelho">Numero de Serie</label>
+                        <input type="text" class="form-control" id="ras_ras_id_aparelho" name="ras_ras_id_aparelho" value="{{ ras_ras_id_aparelho }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ras_ras_prd_id">Modelo</label>
+                        <select class="form-control" id="ras_ras_prd_id" name="ras_ras_prd_id" required>
+                            <option value="69">RST Mini - Sertec</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ras_ras_chip">ICCID</label>
+                        <input type="number" class="form-control" id="ras_ras_chip" name="ras_ras_chip" value="{{ ras_ras_chip }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ras_ras_imei">IMEI do Equipamento</label>
+                        <input type="text" class="form-control" id="ras_ras_imei" name="ras_ras_imei" value="{{ imei }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <a href="{{ url_for('cadastrar_equipamentos_portal') }}" class="btn btn-danger">Voltar</a>
+                </form>
+            </div>
         </div>
     </div>
 </body>
