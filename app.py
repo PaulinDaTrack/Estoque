@@ -1115,55 +1115,76 @@ def process_all_ordens():
 
 # Fim da integração do script ordens.py
 
-def integrar_multi():
-    """
-    Integra a função multi.py: lista veículos e equipamentos instalados no dia anterior.
-    Só pode ser instalado equipamentos que estão no estoque dos técnicos e previamente cadastrados.
-    A origem da movimentação é o status atual do técnico.
-    """
-    yesterday = (datetime.now(TIMEZONE) - timedelta(days=1)).date()
-    try:
-        conexao = conectar_banco()
-        cursor = conexao.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT DISTINCT id_equipamento
-            FROM movimentacoes
-            WHERE tipo_movimentacao = 'Instalação'
-              AND DATE(data_movimentacao) = %s
-        """, (yesterday,))
-        instalacoes = cursor.fetchall()
-        if not instalacoes:
-            print("Nenhum equipamento foi instalado ontem.")
+def consultar_instalacoes_multi():
+    url_login = "http://apiv1.1gps.com.br/seguranca/logon"
+    payload_login = {
+        "username": os.getenv('MULTI_LOGIN'),
+        "password": os.getenv('MULTI_PASSWORD'),
+        "appid": 1202,
+        "token": None,
+        "expiration": None
+    }
+    headers_login = {
+        "Content-Type": "application/json"
+    }
+
+    response_login = requests.post(url_login, json=payload_login, headers=headers_login)
+    if response_login.status_code == 200:
+        token = response_login.json()["object"]["token"]
+        headers_veiculos = {
+            "Content-Type": "application/json",
+            "token": token
+        }
+        url_veiculos = "http://apiv1.1gps.com.br/veiculos"
+        response_veiculos = requests.post(url_veiculos, headers=headers_veiculos)
+        if response_veiculos.status_code == 200:
+            veiculos = response_veiculos.json()["object"]
+            ontem = (datetime.now(timezone.utc) - timedelta(days=1)).strftime('%Y-%m-%d')
+            placas_numeros_datas = [
+                {
+                    "placa": veiculo["placa"],
+                    "numero": veiculo["dispositivos"][0]["numero"],
+                    "dataCadastrado": datetime.fromtimestamp(veiculo["dataCadastrado"] / 1000, timezone.utc).strftime('%Y-%m-%d %H:%M:%S') if veiculo["dataCadastrado"] else None
+                }
+                for veiculo in veiculos if veiculo["dispositivos"]
+            ]
+            try:
+                conexao = conectar_banco()
+                cursor = conexao.cursor()
+                for item in placas_numeros_datas:
+                    if item['dataCadastrado'] and item['dataCadastrado'].startswith(ontem):
+                        id_equipamento = item['numero']
+                        cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
+                        equipamento = cursor.fetchone()
+                        if equipamento and equipamento[0] != 'INSTALADO':
+                            tecnico = equipamento[0]
+                            cursor.execute("""
+                                UPDATE equipamentos
+                                SET status = 'INSTALADO'
+                                WHERE id_equipamento = %s
+                            """, (id_equipamento,))
+                            cursor.execute("""
+                                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, (id_equipamento, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
+                conexao.commit()
+            except Exception as e:
+                print(f"Erro ao atualizar instalações: {e}")
+            finally:
+                cursor.close()
+                conexao.close()
         else:
-            for reg in instalacoes:
-                id_equipamento = reg['id_equipamento']
-                cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
-                result = cursor.fetchone()
-                if result and result['status'] != 'EM ESTOQUE':
-                    origem = result['status']
-                    cursor.execute("UPDATE equipamentos SET status = 'INSTALADO' WHERE id_equipamento = %s", (id_equipamento,))
-                    cursor.execute("""
-                        INSERT INTO movimentacoes 
-                        (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (id_equipamento, origem, "INSTALADO", datetime.now(TIMEZONE), "Instalação (multi)", "Equipamento instalado via integração multi.py"))
-                else:
-                    print(f"Equipamento {id_equipamento} não está no estoque dos técnicos ou não cadastrado.")
-            conexao.commit()
-            print("Equipamentos integrados:", [reg['id_equipamento'] for reg in instalacoes])
-    except Exception as e:
-        print(f"Erro na integração multi: {e}")
-    finally:
-        cursor.close()
-        conexao.close()
+            print(f"Erro ao buscar veículos: {response_veiculos.status_code}")
+    else:
+        print(f"Erro ao fazer login: {response_login.status_code}")
 
 # Configurar o agendador como daemon
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
 scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
-#scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
+# scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
 scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
-scheduler.add_job(func=integrar_multi, trigger="interval", hours=12)
+scheduler.add_job(func=consultar_instalacoes_multi, trigger="interval", hours=12)
 scheduler.start()
 
 # Garantir que o agendador seja desligado corretamente ao encerrar a aplicação
