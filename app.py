@@ -904,88 +904,8 @@ def verificar_equipamentos_fulltrack():
         print("Erro: A resposta não está em formato JSON válido.", response.text)
 
 placas_prev = set()  # Declarar variável global para armazenar os números anteriores
-
-def listar_placas_equipamentos():
-    global placas_prev
-    url_login = "http://apiv1.1gps.com.br/seguranca/logon"
-    payload_login = {
-        "username": os.getenv('MULTI_LOGIN'),
-        "password": os.getenv('MULTI_PASSWORD'),
-        "appid": 1202,
-        "token": None,
-        "expiration": None
-    }
-    headers_login = {"Content-Type": "application/json"}
-    try:
-        response_login = requests.post(url_login, json=payload_login, headers=headers_login, timeout=10)
-    except requests.exceptions.RequestException as e:
-        print(f"Erro ao fazer login: {e}")
-        return []  # Retornar lista vazia em caso de erro
-    if response_login.status_code != 200:
-        print(f"Erro ao fazer login: {response_login.status_code}")
-        return []
-    login_data = response_login.json().get("object")
-    if not login_data:
-        print("Dados de login não encontrados.")
-        return []
-    token = login_data.get("token")
-    if not token:
-        print("Token não encontrado.")
-        return []
-    headers_veiculos = {
-        "Content-Type": "application/json",
-        "token": token
-    }
-    url_veiculos = "http://apiv1.1gps.com.br/veiculos"
-    try:
-        response_veiculos = requests.post(url_veiculos, headers=headers_veiculos, timeout=10)
-    except requests.exceptions.RequestException as e:
-        print(f"Erro ao buscar veículos: {e}")
-        return []
-    if response_veiculos.status_code != 200:
-        print(f"Erro ao buscar veículos: {response_veiculos.status_code}")
-        return []
-    veiculos = response_veiculos.json()["object"]
-    current_numbers = {v["dispositivos"][0]["numero"] for v in veiculos if v["dispositivos"]}
-    if current_numbers - placas_prev:
-        comparar_equipamentos_com_placas()
-    placas_prev = current_numbers
-    return [
-        {"placa": v["placa"], "numero": v["dispositivos"][0]["numero"]}
-        for v in veiculos if v["dispositivos"]
-    ]
-
-def comparar_equipamentos_com_placas():
-    placas_equipamentos = listar_placas_equipamentos()
-    if not placas_equipamentos:
-        return
-
-    try:
-        conexao = conectar_banco()
-        cursor = conexao.cursor()
-        cursor.execute("SELECT id_equipamento, status FROM equipamentos WHERE status != 'INSTALADO'")
-        equipamentos = cursor.fetchall()
-        ids_equipamentos = {equip[0]: equip[1] for equip in equipamentos}
-
-        for item in placas_equipamentos:
-            numero = item["numero"]
-            if numero in ids_equipamentos and ids_equipamentos[numero] != 'EM ESTOQUE':
-                tecnico = ids_equipamentos[numero]
-                cursor.execute("""
-                    UPDATE equipamentos
-                    SET status = 'INSTALADO'
-                    WHERE id_equipamento = %s
-                """, (numero,))
-                cursor.execute("""
-                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (numero, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", f"Equipamento instalado no veículo com placa {item['placa']}"))
-        conexao.commit()
-    except Exception as e:
-        print(f"Erro ao atualizar equipamentos: {e}")
-    finally:
-        cursor.close()
-        conexao.close()
+multi_token = None
+multi_token_time = None
 
 def process_service_orders():
     try:
@@ -1195,13 +1115,55 @@ def process_all_ordens():
 
 # Fim da integração do script ordens.py
 
+def integrar_multi():
+    """
+    Integra a função multi.py: lista veículos e equipamentos instalados no dia anterior.
+    Só pode ser instalado equipamentos que estão no estoque dos técnicos e previamente cadastrados.
+    A origem da movimentação é o status atual do técnico.
+    """
+    yesterday = (datetime.now(TIMEZONE) - timedelta(days=1)).date()
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT DISTINCT id_equipamento
+            FROM movimentacoes
+            WHERE tipo_movimentacao = 'Instalação'
+              AND DATE(data_movimentacao) = %s
+        """, (yesterday,))
+        instalacoes = cursor.fetchall()
+        if not instalacoes:
+            print("Nenhum equipamento foi instalado ontem.")
+        else:
+            for reg in instalacoes:
+                id_equipamento = reg['id_equipamento']
+                cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
+                result = cursor.fetchone()
+                if result and result['status'] != 'EM ESTOQUE':
+                    origem = result['status']
+                    cursor.execute("UPDATE equipamentos SET status = 'INSTALADO' WHERE id_equipamento = %s", (id_equipamento,))
+                    cursor.execute("""
+                        INSERT INTO movimentacoes 
+                        (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (id_equipamento, origem, "INSTALADO", datetime.now(TIMEZONE), "Instalação (multi)", "Equipamento instalado via integração multi.py"))
+                else:
+                    print(f"Equipamento {id_equipamento} não está no estoque dos técnicos ou não cadastrado.")
+            conexao.commit()
+            print("Equipamentos integrados:", [reg['id_equipamento'] for reg in instalacoes])
+    except Exception as e:
+        print(f"Erro na integração multi: {e}")
+    finally:
+        cursor.close()
+        conexao.close()
+
 # Configurar o agendador como daemon
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
 scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
-# scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
-scheduler.add_job(func=comparar_equipamentos_com_placas, trigger="interval", minutes=1)
+#scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
 scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
+scheduler.add_job(func=integrar_multi, trigger="interval", hours=12)
 scheduler.start()
 
 # Garantir que o agendador seja desligado corretamente ao encerrar a aplicação
