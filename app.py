@@ -1110,8 +1110,33 @@ def process_all_ordens():
     token, data_expiracao_dt = obter_token()
     if token:
         obter_e_inserir_ultimas_os(token, data_expiracao_dt)
+        # Verificar e inserir OS faltantes nas últimas 50
+        verificar_e_inserir_os_faltantes(token, data_expiracao_dt)
     # Processar as OS já inseridas que ainda não foram processadas
     process_service_orders()
+
+def verificar_e_inserir_os_faltantes(token, data_expiracao_dt):
+    ultima_bd = buscar_ultima_os_bd()
+    inicio = max(1, ultima_bd - 49)  # Verificar as últimas 50 OS
+    for numero_os in range(inicio, ultima_bd + 1):
+        if not os_existe_no_banco(str(numero_os)):
+            url_os = f"https://api-hc.harmonit.com.br:8086/OrdemServico/ObterOrdemServicoPorNumero?numeroOs={numero_os}"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+            if token_expirado(data_expiracao_dt):
+                print("🔄 O token expirou! Obtendo novo token...")
+                token, data_expiracao_dt = obter_token()
+                headers["Authorization"] = f"Bearer {token}"
+            response_os = requests.get(url_os, headers=headers)
+            if response_os.status_code == 200:
+                data_os = response_os.json()
+                inserir_ordem_servico_no_banco(data_os["data"], str(numero_os))
+                print(f"✅ OS {numero_os} inserida.")
+            else:
+                print(f"❌ Falha ao obter OS {numero_os}: {response_os.status_code}")
+            time.sleep(1)
 
 # Fim da integração do script ordens.py
 
