@@ -828,7 +828,7 @@ def comparar_equipamentos():
                     ids_equipamentos = {equip[0]: equip[1] for equip in equipamentos}
 
                     for id_tracker in ids_tracker:
-                        if id_tracker in ids_equipamentos and ids_equipamentos[id_tracker] != 'EM ESTOQUE':
+                        if id_tracker in ids_equipamentos and ids_equipamentos[id_tracker] not in ['EM ESTOQUE', 'PARA TESTAR']:
                             tecnico = ids_equipamentos[id_tracker]
                             cursor.execute("""
                                 UPDATE equipamentos
@@ -881,8 +881,8 @@ def verificar_equipamentos_fulltrack():
                     cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (ras_ras_id_aparelho,))
                     equipamento = cursor.fetchone()
 
-                    # Atualizar somente se o status não for 'INSTALADO' nem 'EM ESTOQUE'
-                    if equipamento and equipamento[0] != 'INSTALADO' and equipamento[0] != 'EM ESTOQUE':
+                    # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
+                    if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
                         tecnico = equipamento[0]
                         cursor.execute("""
                             UPDATE equipamentos
@@ -1181,7 +1181,7 @@ def consultar_instalacoes_multi():
                         id_equipamento = item['numero']
                         cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
                         equipamento = cursor.fetchone()
-                        if equipamento and equipamento[0] != 'INSTALADO':
+                        if equipamento and equipamento[0] not in ['INSTALADO', 'PARA TESTAR', 'EM ESTOQUE']:
                             tecnico = equipamento[0]
                             cursor.execute("""
                                 UPDATE equipamentos
