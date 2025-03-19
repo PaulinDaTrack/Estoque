@@ -118,3 +118,7 @@ html, body {
     margin-top: -10px;
     margin-left: 500px;
 }
+
+.alerta {
+    background-color: rgba(255, 0, 0, 0.3); /* Fundo vermelho claro para destacar */
+}

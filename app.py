@@ -11,6 +11,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from flask_caching import Cache
 from mysql.connector import pooling  # Nova importação para pooling
+import json  # Nova importação para lidar com notificações
 
 load_dotenv()
 TIMEZONE = timezone(timedelta(hours=-4))  # Definindo fuso horário GMT-4
@@ -823,22 +824,25 @@ def comparar_equipamentos():
                 try:
                     conexao = conectar_banco()
                     cursor = conexao.cursor()
-                    cursor.execute("SELECT id_equipamento, status FROM equipamentos WHERE status != 'INSTALADO'")
+                    cursor.execute("SELECT id_equipamento, status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE status != 'INSTALADO'")
                     equipamentos = cursor.fetchall()
-                    ids_equipamentos = {equip[0]: equip[1] for equip in equipamentos}
+                    ids_equipamentos = {equip[0]: (equip[1], equip[2]) for equip in equipamentos}
 
                     for id_tracker in ids_tracker:
-                        if id_tracker in ids_equipamentos and ids_equipamentos[id_tracker] not in ['EM ESTOQUE', 'PARA TESTAR']:
-                            tecnico = ids_equipamentos[id_tracker]
-                            cursor.execute("""
-                                UPDATE equipamentos
-                                SET status = 'INSTALADO'
-                                WHERE id_equipamento = %s
-                            """, (id_tracker,))
-                            cursor.execute("""
-                                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
-                                VALUES (%s, %s, %s, %s, %s, %s)
-                            """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
+                        if id_tracker in ids_equipamentos and ids_equipamentos[id_tracker][0] not in ['EM ESTOQUE', 'PARA TESTAR']:
+                            tecnico = ids_equipamentos[id_tracker][0]
+                            data_movimentacao = ids_equipamentos[id_tracker][1]
+                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                                cursor.execute("""
+                                    UPDATE equipamentos
+                                    SET status = 'INSTALADO'
+                                    WHERE id_equipamento = %s
+                                """, (id_tracker,))
+                                cursor.execute("""
+                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                adicionar_notificacao(f"Equipamento {id_tracker} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
                     conexao.commit()
                 except Exception as e:
                     print(f"Erro ao atualizar equipamentos: {e}")
@@ -878,21 +882,24 @@ def verificar_equipamentos_fulltrack():
                 ras_ras_cli_id = item.get("ras_ras_cli_id", None)
 
                 if ras_ras_cli_id:
-                    cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (ras_ras_id_aparelho,))
+                    cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (ras_ras_id_aparelho,))
                     equipamento = cursor.fetchone()
 
                     # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
                     if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
                         tecnico = equipamento[0]
-                        cursor.execute("""
-                            UPDATE equipamentos
-                            SET status = 'INSTALADO'
-                            WHERE id_equipamento = %s
-                        """, (ras_ras_id_aparelho,))
-                        cursor.execute("""
-                            INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
+                        data_movimentacao = equipamento[1]
+                        if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                            cursor.execute("""
+                                UPDATE equipamentos
+                                SET status = 'INSTALADO'
+                                WHERE id_equipamento = %s
+                            """, (ras_ras_id_aparelho,))
+                            cursor.execute("""
+                                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                            adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
 
             conexao.commit()
             cursor.close()
@@ -1179,19 +1186,22 @@ def consultar_instalacoes_multi():
                 for item in placas_numeros_datas:
                     if item['dataCadastrado'] and item['dataCadastrado'].startswith(ontem):
                         id_equipamento = item['numero']
-                        cursor.execute("SELECT status FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
+                        cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (id_equipamento,))
                         equipamento = cursor.fetchone()
                         if equipamento and equipamento[0] not in ['INSTALADO', 'PARA TESTAR', 'EM ESTOQUE']:
                             tecnico = equipamento[0]
-                            cursor.execute("""
-                                UPDATE equipamentos
-                                SET status = 'INSTALADO'
-                                WHERE id_equipamento = %s
-                            """, (id_equipamento,))
-                            cursor.execute("""
-                                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
-                                VALUES (%s, %s, %s, %s, %s, %s)
-                            """, (id_equipamento, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
+                            data_movimentacao = equipamento[1]
+                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                                cursor.execute("""
+                                    UPDATE equipamentos
+                                    SET status = 'INSTALADO'
+                                    WHERE id_equipamento = %s
+                                """, (id_equipamento,))
+                                cursor.execute("""
+                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                """, (id_equipamento, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                adicionar_notificacao(f"Equipamento {id_equipamento} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
                 conexao.commit()
             except Exception as e:
                 print(f"Erro ao atualizar instalações: {e}")
@@ -1203,13 +1213,24 @@ def consultar_instalacoes_multi():
     else:
         print(f"Erro ao fazer login: {response_login.status_code}")
 
+# Função para adicionar notificação
+def adicionar_notificacao(mensagem):
+    notificacoes = cache.get('notificacoes') or []
+    notificacoes.append(mensagem)
+    cache.set('notificacoes', notificacoes)
+
+@app.route('/notificacoes')
+def notificacoes():
+    notificacoes = cache.get('notificacoes') or []
+    return jsonify(notificacoes)
+
 # Configurar o agendador como daemon
 scheduler = BackgroundScheduler(daemon=True)
-scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
-scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
+#scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
+#scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
 # scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
-scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
-scheduler.add_job(func=consultar_instalacoes_multi, trigger="interval", hours=12)
+#scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
+#cheduler.add_job(func=consultar_instalacoes_multi, trigger="interval", hours=12)
 scheduler.start()
 
 # Garantir que o agendador seja desligado corretamente ao encerrar a aplicação
@@ -1217,7 +1238,7 @@ atexit.register(lambda: scheduler.shutdown(wait=False))
 
 if __name__ == "__main__":
     try:
-        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=True, use_reloader=True)
     finally:
         if scheduler.running:
             try:

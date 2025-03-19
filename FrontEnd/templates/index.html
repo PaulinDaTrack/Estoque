@@ -178,6 +178,60 @@
         background: #545B62;
     }
 
+        .notification-icon {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 40px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: 0px;
+            right: 30px;
+            background: red;
+            font-family: Andale Mono, monospace;
+            color: white;
+            border-radius: 100%;
+            padding: 0px 6px;
+            font-size: 14px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 60px; /* Ajuste a posição vertical conforme necessário */
+            left: auto;
+            right: 40px; /* Ajuste a posição horizontal conforme necessário */
+            background: rgb(0, 0, 0, 0.5);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            width: 450px;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            border-bottom: 1px solid #eee;
+            font-family: Andale Mono, monospace;
+            cursor: pointer;
+            color: white;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
     </style>
 </head>
 <body>
@@ -212,6 +266,16 @@
         </div>
     </div>
 
+    <div class="notification-icon" onclick="toggleDropdown()">
+        <i class="fas fa-bell"></i>
+        <span class="notification-count" id="notificationCount">3</span>
+    </div>
+    <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-item">Notificação 1</div>
+        <div class="dropdown-item">Notificação 2</div>
+        <div class="dropdown-item">Notificação 3</div>
+    </div>
+
     <div class="overlay" id="overlay"></div>
 <div class="floating-card" id="logoutCard">
     <p class="logout-text">Você tem certeza que deseja sair?</p>
@@ -229,6 +293,7 @@
                     button.classList.add('fade-in');
                 }, index * 200); // Atraso para cada botão
             });
+            fetchNotificacoes();
         });
 
         function confirmLogout() {
@@ -243,6 +308,32 @@
 
         function logout() {
             window.location.href = '/logout';
+        }
+
+        function toggleDropdown() {
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const notificationIcon = document.querySelector('.notification-icon');
+            const rect = notificationIcon.getBoundingClientRect();
+            dropdownMenu.style.top = `${rect.bottom + window.scrollY}px`;
+            dropdownMenu.style.right = `${window.innerWidth - rect.right}px`;
+            dropdownMenu.classList.toggle('show');
+        }
+
+        function fetchNotificacoes() {
+            fetch('/notificacoes')
+                .then(response => response.json())
+                .then(data => {
+                    const notificationCount = document.getElementById('notificationCount');
+                    notificationCount.textContent = data.length;
+                    const dropdownMenu = document.getElementById('dropdownMenu');
+                    dropdownMenu.innerHTML = '';
+                    data.forEach((notificacao, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'dropdown-item';
+                        item.textContent = notificacao;
+                        dropdownMenu.appendChild(item);
+                    });
+                });
         }
     </script>
 </body>

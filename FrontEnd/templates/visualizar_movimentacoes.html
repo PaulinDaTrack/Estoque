@@ -157,7 +157,7 @@
                         </thead>
                         <tbody id="movimentacoes-list">
                             {% for movimentacao in resultados %}
-                            <tr>
+                            <tr class="{% if movimentacao[6] == 1 %}alerta{% endif %}">
                                 <td>{{ movimentacao[0] }}</td>
                                 <td>{{ movimentacao[1] }}</td>
                                 <td>{{ movimentacao[2] }}</td>
