@@ -821,8 +821,6 @@ def comparar_equipamentos():
             ids_tracker = [item.get('IdTracker') for item in tracker_data if item.get('TrackedUnitType') == 1]
 
             if ids_tracker:
-                conexao = None
-                cursor = None
                 try:
                     conexao = conectar_banco()
                     cursor = conexao.cursor()
@@ -849,10 +847,9 @@ def comparar_equipamentos():
                 except Exception as e:
                     print(f"Erro ao atualizar equipamentos: {e}")
                 finally:
-                    if cursor:
+                    if 'cursor' in locals():
                         cursor.close()
-                    if conexao:
-                        conexao.close()
+                    conexao.close()
             else:
                 print("Nenhum equipamento com TrackedUnitType igual a 1 encontrado.")
         else:
@@ -878,44 +875,36 @@ def verificar_equipamentos_fulltrack():
         if key_for_list:
             trackers = data[key_for_list]  # Pega a lista correta
 
-            conexao = None
-            cursor = None
-            try:
-                conexao = conectar_banco()
-                cursor = conexao.cursor()
+            conexao = conectar_banco()
+            cursor = conexao.cursor()
 
-                for item in trackers:
-                    ras_ras_id_aparelho = item.get("ras_ras_id_aparelho", "N/A")
-                    ras_ras_cli_id = item.get("ras_ras_cli_id", None)
+            for item in trackers:
+                ras_ras_id_aparelho = item.get("ras_ras_id_aparelho", "N/A")
+                ras_ras_cli_id = item.get("ras_ras_cli_id", None)
 
-                    if ras_ras_cli_id:
-                        cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (ras_ras_id_aparelho,))
-                        equipamento = cursor.fetchone()
+                if ras_ras_cli_id:
+                    cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (ras_ras_id_aparelho,))
+                    equipamento = cursor.fetchone()
 
-                        # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
-                        if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
-                            tecnico = equipamento[0]
-                            data_movimentacao = equipamento[1]
-                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
-                                cursor.execute("""
-                                    UPDATE equipamentos
-                                    SET status = 'INSTALADO'
-                                    WHERE id_equipamento = %s
-                                """, (ras_ras_id_aparelho,))
-                                cursor.execute("""
-                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
-                                adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
+                    # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
+                    if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
+                        tecnico = equipamento[0]
+                        data_movimentacao = equipamento[1]
+                        if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                            cursor.execute("""
+                                UPDATE equipamentos
+                                SET status = 'INSTALADO'
+                                WHERE id_equipamento = %s
+                            """, (ras_ras_id_aparelho,))
+                            cursor.execute("""
+                                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                            adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
 
-                conexao.commit()
-            except Exception as e:
-                print(f"Erro ao atualizar equipamentos: {e}")
-            finally:
-                if cursor:
-                    cursor.close()
-                if conexao:
-                    conexao.close()
+            conexao.commit()
+            cursor.close()
+            conexao.close()
         else:
             print("Erro: Não foi encontrada uma lista dentro do JSON.")
 
@@ -1192,8 +1181,6 @@ def consultar_instalacoes_multi():
                 }
                 for veiculo in veiculos if veiculo["dispositivos"]
             ]
-            conexao = None
-            cursor = None
             try:
                 conexao = conectar_banco()
                 cursor = conexao.cursor()
@@ -1220,10 +1207,8 @@ def consultar_instalacoes_multi():
             except Exception as e:
                 print(f"Erro ao atualizar instalações: {e}")
             finally:
-                if cursor:
-                    cursor.close()
-                if conexao:
-                    conexao.close()
+                cursor.close()
+                conexao.close()
         else:
             print(f"Erro ao buscar veículos: {response_veiculos.status_code}")
     else:
