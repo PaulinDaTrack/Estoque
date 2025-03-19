@@ -832,17 +832,21 @@ def comparar_equipamentos():
                         if id_tracker in ids_equipamentos and ids_equipamentos[id_tracker][0] not in ['EM ESTOQUE', 'PARA TESTAR']:
                             tecnico = ids_equipamentos[id_tracker][0]
                             data_movimentacao = ids_equipamentos[id_tracker][1]
-                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
-                                cursor.execute("""
-                                    UPDATE equipamentos
-                                    SET status = 'INSTALADO'
-                                    WHERE id_equipamento = %s
-                                """, (id_tracker,))
-                                cursor.execute("""
-                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
-                                adicionar_notificacao(f"Equipamento {id_tracker} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
+                            if data_movimentacao:
+                                # Garantir que data_movimentacao seja aware
+                                if data_movimentacao.tzinfo is None:
+                                    data_movimentacao = data_movimentacao.replace(tzinfo=TIMEZONE)
+                                if (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                                    cursor.execute("""
+                                        UPDATE equipamentos
+                                        SET status = 'INSTALADO'
+                                        WHERE id_equipamento = %s
+                                    """, (id_tracker,))
+                                    cursor.execute("""
+                                        INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
+                                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                    """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                    adicionar_notificacao(f"Equipamento {id_tracker} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
                     conexao.commit()
                 except Exception as e:
                     print(f"Erro ao atualizar equipamentos: {e}")
@@ -892,6 +896,8 @@ def verificar_equipamentos_fulltrack():
                         if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
                             tecnico = equipamento[0]
                             data_movimentacao = equipamento[1]
+                            if data_movimentacao and data_movimentacao.tzinfo is None:
+                                data_movimentacao = data_movimentacao.replace(tzinfo=TIMEZONE)
                             if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
                                 cursor.execute("""
                                     UPDATE equipamentos
@@ -1199,6 +1205,8 @@ def consultar_instalacoes_multi():
                         if equipamento and equipamento[0] not in ['INSTALADO', 'PARA TESTAR', 'EM ESTOQUE']:
                             tecnico = equipamento[0]
                             data_movimentacao = equipamento[1]
+                            if data_movimentacao and data_movimentacao.tzinfo is None:
+                                data_movimentacao = data_movimentacao.replace(tzinfo=TIMEZONE)
                             if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
                                 cursor.execute("""
                                     UPDATE equipamentos
