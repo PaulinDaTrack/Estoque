@@ -824,7 +824,7 @@ def comparar_equipamentos():
                 try:
                     conexao = conectar_banco()
                     cursor = conexao.cursor()
-                    cursor.execute("SELECT id_equipamento, status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE status != 'INSTALADO'")
+                    cursor.execute("SELECT equipamentos.id_equipamento, equipamentos.status, movimentacoes.data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.status != 'INSTALADO'")
                     equipamentos = cursor.fetchall()
                     ids_equipamentos = {equip[0]: (equip[1], equip[2]) for equip in equipamentos}
 
@@ -849,7 +849,8 @@ def comparar_equipamentos():
                 finally:
                     if 'cursor' in locals():
                         cursor.close()
-                    conexao.close()
+                    if 'conexao' in locals():
+                        conexao.close()
             else:
                 print("Nenhum equipamento com TrackedUnitType igual a 1 encontrado.")
         else:
@@ -875,36 +876,42 @@ def verificar_equipamentos_fulltrack():
         if key_for_list:
             trackers = data[key_for_list]  # Pega a lista correta
 
-            conexao = conectar_banco()
-            cursor = conexao.cursor()
+            try:
+                conexao = conectar_banco()
+                cursor = conexao.cursor(buffered=True)
 
-            for item in trackers:
-                ras_ras_id_aparelho = item.get("ras_ras_id_aparelho", "N/A")
-                ras_ras_cli_id = item.get("ras_ras_cli_id", None)
+                for item in trackers:
+                    ras_ras_id_aparelho = item.get("ras_ras_id_aparelho", "N/A")
+                    ras_ras_cli_id = item.get("ras_ras_cli_id", None)
 
-                if ras_ras_cli_id:
-                    cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (ras_ras_id_aparelho,))
-                    equipamento = cursor.fetchone()
+                    if ras_ras_cli_id:
+                        cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (ras_ras_id_aparelho,))
+                        equipamento = cursor.fetchone()
 
-                    # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
-                    if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
-                        tecnico = equipamento[0]
-                        data_movimentacao = equipamento[1]
-                        if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
-                            cursor.execute("""
-                                UPDATE equipamentos
-                                SET status = 'INSTALADO'
-                                WHERE id_equipamento = %s
-                            """, (ras_ras_id_aparelho,))
-                            cursor.execute("""
-                                INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
-                            adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
+                        # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
+                        if equipamento and equipamento[0] not in ['INSTALADO', 'EM ESTOQUE', 'PARA TESTAR']:
+                            tecnico = equipamento[0]
+                            data_movimentacao = equipamento[1]
+                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                                cursor.execute("""
+                                    UPDATE equipamentos
+                                    SET status = 'INSTALADO'
+                                    WHERE id_equipamento = %s
+                                """, (ras_ras_id_aparelho,))
+                                cursor.execute("""
+                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
 
-            conexao.commit()
-            cursor.close()
-            conexao.close()
+                conexao.commit()
+            except Exception as e:
+                print(f"Erro ao atualizar instalações: {e}")
+            finally:
+                if 'cursor' in locals():
+                    cursor.close()
+                if 'conexao' in locals():
+                    conexao.close()
         else:
             print("Erro: Não foi encontrada uma lista dentro do JSON.")
 
@@ -1239,7 +1246,7 @@ atexit.register(lambda: scheduler.shutdown(wait=False))
 
 if __name__ == "__main__":
     try:
-        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=True, use_reloader=True)
+        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
     finally:
         if scheduler.running:
             try:
