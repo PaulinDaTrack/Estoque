@@ -885,7 +885,7 @@ def verificar_equipamentos_fulltrack():
                     ras_ras_cli_id = item.get("ras_ras_cli_id", None)
 
                     if ras_ras_cli_id:
-                        cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s", (ras_ras_id_aparelho,))
+                        cursor.execute("SELECT status, data_movimentacao FROM equipamentos LEFT JOIN movimentacoes ON equipamentos.id_equipamento = movimentacoes.id_equipamento WHERE equipamentos.id_equipamento = %s ORDER BY movimentacoes.data_movimentacao DESC LIMIT 1", (ras_ras_id_aparelho,))
                         equipamento = cursor.fetchone()
 
                         # Atualizar somente se o status não for 'INSTALADO', 'EM ESTOQUE' ou 'PARA TESTAR'
