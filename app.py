@@ -1226,11 +1226,11 @@ def notificacoes():
 
 # Configurar o agendador como daemon
 scheduler = BackgroundScheduler(daemon=True)
-#scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
-#scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
-# scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
-#scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
-#cheduler.add_job(func=consultar_instalacoes_multi, trigger="interval", hours=12)
+scheduler.add_job(func=comparar_equipamentos, trigger="interval", minutes=1)
+scheduler.add_job(func=verificar_equipamentos_fulltrack, trigger="interval", minutes=1)
+#scheduler.add_job(func=mover_para_estoque, trigger="interval", days=1)
+scheduler.add_job(func=process_all_ordens, trigger="interval", hours=6)
+scheduler.add_job(func=consultar_instalacoes_multi, trigger="interval", hours=12)
 scheduler.start()
 
 # Garantir que o agendador seja desligado corretamente ao encerrar a aplicação
