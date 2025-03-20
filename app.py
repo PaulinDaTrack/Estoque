@@ -836,7 +836,8 @@ def comparar_equipamentos():
                                 # Garantir que data_movimentacao seja aware
                                 if data_movimentacao.tzinfo is None:
                                     data_movimentacao = data_movimentacao.replace(tzinfo=TIMEZONE)
-                                if (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                                # Usar comparação abaixo de 24h
+                                if (datetime.now(TIMEZONE) - data_movimentacao) < timedelta(days=1):
                                     cursor.execute("""
                                         UPDATE equipamentos
                                         SET status = 'INSTALADO'
@@ -845,8 +846,15 @@ def comparar_equipamentos():
                                     cursor.execute("""
                                         INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                                         VALUES (%s, %s, %s, %s, %s, %s)
-                                    """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
-                                    adicionar_notificacao(f"Equipamento {id_tracker} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
+                                    """, (
+                                        id_tracker, 
+                                        tecnico, 
+                                        "INSTALADO", 
+                                        datetime.now(TIMEZONE), 
+                                        "Instalação", 
+                                        "Reinstalação em menos de 24h – FAVOR VERIFICAR EQUIPAMENTO"
+                                    ))
+                                    adicionar_notificacao(f"Equipamento {id_tracker} reinstalado em menos de 24h. Favor verificar!")
                     conexao.commit()
                 except Exception as e:
                     print(f"Erro ao atualizar equipamentos: {e}")
@@ -898,7 +906,7 @@ def verificar_equipamentos_fulltrack():
                             data_movimentacao = equipamento[1]
                             if data_movimentacao and data_movimentacao.tzinfo is None:
                                 data_movimentacao = data_movimentacao.replace(tzinfo=TIMEZONE)
-                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao) < timedelta(days=1):
                                 cursor.execute("""
                                     UPDATE equipamentos
                                     SET status = 'INSTALADO'
@@ -907,8 +915,15 @@ def verificar_equipamentos_fulltrack():
                                 cursor.execute("""
                                     INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                                     VALUES (%s, %s, %s, %s, %s, %s)
-                                """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
-                                adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
+                                """, (
+                                    ras_ras_id_aparelho, 
+                                    tecnico, 
+                                    "INSTALADO", 
+                                    datetime.now(TIMEZONE), 
+                                    "Instalação", 
+                                    "Reinstalação em menos de 24h – FAVOR VERIFICAR EQUIPAMENTO"
+                                ))
+                                adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} reinstalado em menos de 24h. Favor verificar!")
 
                 conexao.commit()
             except Exception as e:
@@ -1207,7 +1222,7 @@ def consultar_instalacoes_multi():
                             data_movimentacao = equipamento[1]
                             if data_movimentacao and data_movimentacao.tzinfo is None:
                                 data_movimentacao = data_movimentacao.replace(tzinfo=TIMEZONE)
-                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao).days <= 1:
+                            if data_movimentacao and (datetime.now(TIMEZONE) - data_movimentacao) < timedelta(days=1):
                                 cursor.execute("""
                                     UPDATE equipamentos
                                     SET status = 'INSTALADO'
@@ -1216,8 +1231,15 @@ def consultar_instalacoes_multi():
                                 cursor.execute("""
                                     INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
                                     VALUES (%s, %s, %s, %s, %s, %s)
-                                """, (id_equipamento, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
-                                adicionar_notificacao(f"Equipamento {id_equipamento} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
+                                """, (
+                                    id_equipamento, 
+                                    tecnico, 
+                                    "INSTALADO", 
+                                    datetime.now(TIMEZONE), 
+                                    "Instalação", 
+                                    "Reinstalação em menos de 24h – FAVOR VERIFICAR EQUIPAMENTO"
+                                ))
+                                adicionar_notificacao(f"Equipamento {id_equipamento} reinstalado em menos de 24h. Favor verificar!")
                 conexao.commit()
             except Exception as e:
                 print(f"Erro ao atualizar instalações: {e}")
