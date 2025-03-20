@@ -843,9 +843,9 @@ def comparar_equipamentos():
                                         WHERE id_equipamento = %s
                                     """, (id_tracker,))
                                     cursor.execute("""
-                                        INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
-                                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                    """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                        INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                                        VALUES (%s, %s, %s, %s, %s, %s)
+                                    """, (id_tracker, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
                                     adicionar_notificacao(f"Equipamento {id_tracker} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
                     conexao.commit()
                 except Exception as e:
@@ -905,9 +905,9 @@ def verificar_equipamentos_fulltrack():
                                     WHERE id_equipamento = %s
                                 """, (ras_ras_id_aparelho,))
                                 cursor.execute("""
-                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                                    VALUES (%s, %s, %s, %s, %s, %s)
+                                """, (ras_ras_id_aparelho, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
                                 adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
 
                 conexao.commit()
@@ -1214,9 +1214,9 @@ def consultar_instalacoes_multi():
                                     WHERE id_equipamento = %s
                                 """, (id_equipamento,))
                                 cursor.execute("""
-                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao, alerta)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                """, (id_equipamento, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado", 1))
+                                    INSERT INTO movimentacoes (id_equipamento, origem, destino, data_movimentacao, tipo_movimentacao, observacao)
+                                    VALUES (%s, %s, %s, %s, %s, %s)
+                                """, (id_equipamento, tecnico, "INSTALADO", datetime.now(TIMEZONE), "Instalação", "Equipamento instalado"))
                                 adicionar_notificacao(f"Equipamento {id_equipamento} foi desinstalado e instalado novamente sem ser desvinculado do portal.")
                 conexao.commit()
             except Exception as e:
