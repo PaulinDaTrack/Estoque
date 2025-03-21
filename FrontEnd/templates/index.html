@@ -327,11 +327,11 @@
                     notificationCount.textContent = data.length;
                     const dropdownMenu = document.getElementById('dropdownMenu');
                     dropdownMenu.innerHTML = '';
-                    data.forEach((notificacao, index) => {
-                        const item = document.createElement('div');
-                        item.className = 'dropdown-item';
-                        item.textContent = notificacao;
-                        dropdownMenu.appendChild(item);
+                    data.forEach((notificacao) => {
+                        const card = document.createElement('div');
+                        card.className = 'dropdown-item alert-card';
+                        card.textContent = notificacao;
+                        dropdownMenu.appendChild(card);
                     });
                 });
         }

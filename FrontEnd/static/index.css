@@ -98,3 +98,12 @@ html, body {
 .dropdown-item:hover {
     background: #f5f5f5;
 }
+
+.alert-card {
+    background: #fff3cd; /* fundo amarelo claro */
+    color: #856404;
+    border: 1px solid #ffeeba;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 5px;
+}
