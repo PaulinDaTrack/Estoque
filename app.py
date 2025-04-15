@@ -854,7 +854,7 @@ def comparar_equipamentos():
                                         "Instalação", 
                                         "Reinstalação em menos de 24h – FAVOR VERIFICAR EQUIPAMENTO"
                                     ))
-                                    adicionar_notificacao(f"Equipamento {id_tracker} reinstalado em menos de 24h. Favor verificar!")
+                                    salvar_notificacao(f"Equipamento {id_tracker} reinstalado em menos de 24h. Favor verificar!")
                     conexao.commit()
                 except Exception as e:
                     print(f"Erro ao atualizar equipamentos: {e}")
@@ -923,7 +923,7 @@ def verificar_equipamentos_fulltrack():
                                     "Instalação", 
                                     "Reinstalação em menos de 24h – FAVOR VERIFICAR EQUIPAMENTO"
                                 ))
-                                adicionar_notificacao(f"Equipamento {ras_ras_id_aparelho} reinstalado em menos de 24h. Favor verificar!")
+                                salvar_notificacao(f"Equipamento {ras_ras_id_aparelho} reinstalado em menos de 24h. Favor verificar!")
 
                 conexao.commit()
             except Exception as e:
@@ -1239,7 +1239,7 @@ def consultar_instalacoes_multi():
                                     "Instalação", 
                                     "Reinstalação em menos de 24h – FAVOR VERIFICAR EQUIPAMENTO"
                                 ))
-                                adicionar_notificacao(f"Equipamento {id_equipamento} reinstalado em menos de 24h. Favor verificar!")
+                                salvar_notificacao(f"Equipamento {id_equipamento} reinstalado em menos de 24h. Favor verificar!")
                 conexao.commit()
             except Exception as e:
                 print(f"Erro ao atualizar instalações: {e}")
@@ -1251,16 +1251,112 @@ def consultar_instalacoes_multi():
     else:
         print(f"Erro ao fazer login: {response_login.status_code}")
 
-# Função para adicionar notificação
 def adicionar_notificacao(mensagem):
     notificacoes = cache.get('notificacoes') or []
-    notificacoes.append(mensagem)
-    cache.set('notificacoes', notificacoes)
+    if mensagem not in notificacoes:
+        notificacoes.append(mensagem)
+        cache.set('notificacoes', notificacoes)
 
 @app.route('/notificacoes')
 def notificacoes():
-    notificacoes = cache.get('notificacoes') or []
+    notificacoes = buscar_notificacoes()
     return jsonify(notificacoes)
+
+@app.route('/limpar_notificacoes', methods=['POST'])
+def limpar_notificacoes():
+    cache.set('notificacoes', [])
+    return jsonify({"success": True})
+
+
+def salvar_notificacao(mensagem):
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("SELECT COUNT(*) FROM notificacoes WHERE mensagem = %s", (mensagem,))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("INSERT INTO notificacoes (mensagem, visto) VALUES (%s, %s)", (mensagem, False))
+            conexao.commit()
+    finally:
+        cursor.close()
+        conexao.close()
+
+
+def buscar_notificacoes(limit=20):
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("SELECT mensagem FROM notificacoes ORDER BY id DESC LIMIT %s", (limit,))
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conexao.close()
+
+def contar_nao_vistas():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("SELECT COUNT(*) FROM notificacoes WHERE visto = FALSE")
+        return cursor.fetchone()[0]
+    finally:
+        cursor.close()
+        conexao.close()
+
+@app.route('/notificacoes_contagem')
+def notificacoes_contagem():
+    return jsonify({"nao_vistas": contar_nao_vistas()})
+
+
+@app.route('/notificacoes_marcar_vistas', methods=['POST'])
+def notificacoes_marcar_vistas():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        cursor.execute("UPDATE notificacoes SET visto = TRUE WHERE visto = FALSE")
+        conexao.commit()
+        return jsonify({"success": True})
+    finally:
+        cursor.close()
+        conexao.close()
+
+
+
+def importar_reinstalacoes_antigas_para_notificacoes():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+
+        # Buscar movimentações antigas com observação relevante
+        cursor.execute("""
+            SELECT id_equipamento, data_movimentacao, observacao
+            FROM movimentacoes
+            WHERE observacao LIKE '%Reinstalação em menos de 24h%'
+        """)
+        registros = cursor.fetchall()
+
+        # Verificar mensagens já existentes na tabela de notificações
+        cursor.execute("SELECT mensagem FROM notificacoes")
+        mensagens_existentes = {linha[0] for linha in cursor.fetchall()}
+
+        novas_notificacoes = []
+        for equipamento_id, data_mov, observacao in registros:
+            mensagem = f"Equipamento {equipamento_id} reinstalado em menos de 24h em {data_mov.strftime('%d/%m/%y %H:%M')}"
+            if mensagem not in mensagens_existentes:
+                novas_notificacoes.append((mensagem,))
+
+        # Inserir apenas as novas
+        if novas_notificacoes:
+            cursor.executemany("INSERT INTO notificacoes (mensagem) VALUES (%s)", novas_notificacoes)
+            conexao.commit()
+            print(f"✅ {len(novas_notificacoes)} notificações importadas.")
+        else:
+            print("Nenhuma nova notificação para importar.")
+    except Exception as e:
+        print(f"Erro ao importar reinstalações: {e}")
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conexao' in locals(): conexao.close()
+
+
 
 # Configurar o agendador como daemon
 scheduler = BackgroundScheduler(daemon=True)
@@ -1276,6 +1372,7 @@ atexit.register(lambda: scheduler.shutdown(wait=False))
 
 if __name__ == "__main__":
     try:
+        importar_reinstalacoes_antigas_para_notificacoes()
         app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
     finally:
         if scheduler.running:

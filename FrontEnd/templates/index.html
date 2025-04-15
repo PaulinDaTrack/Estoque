@@ -268,12 +268,9 @@
 
     <div class="notification-icon" onclick="toggleDropdown()">
         <i class="fas fa-bell"></i>
-        <span class="notification-count" id="notificationCount">3</span>
+        <span class="notification-count" id="notificationCount">0</span>
     </div>
     <div class="dropdown-menu" id="dropdownMenu">
-        <div class="dropdown-item">Notificação 1</div>
-        <div class="dropdown-item">Notificação 2</div>
-        <div class="dropdown-item">Notificação 3</div>
     </div>
 
     <div class="overlay" id="overlay"></div>
@@ -310,6 +307,7 @@
             window.location.href = '/logout';
         }
 
+   
         function toggleDropdown() {
             const dropdownMenu = document.getElementById('dropdownMenu');
             const notificationIcon = document.querySelector('.notification-icon');
@@ -317,14 +315,22 @@
             dropdownMenu.style.top = `${rect.bottom + window.scrollY}px`;
             dropdownMenu.style.right = `${window.innerWidth - rect.right}px`;
             dropdownMenu.classList.toggle('show');
+
+            // Se o menu foi aberto, marcar como lidas
+            if (dropdownMenu.classList.contains('show')) {
+                fetch('/notificacoes_marcar_vistas', { method: 'POST' })
+                    .then(() => {
+                        fetchNotificacoes(); // atualizar contagem
+                    });
+            }
         }
+
+
 
         function fetchNotificacoes() {
             fetch('/notificacoes')
                 .then(response => response.json())
                 .then(data => {
-                    const notificationCount = document.getElementById('notificationCount');
-                    notificationCount.textContent = data.length;
                     const dropdownMenu = document.getElementById('dropdownMenu');
                     dropdownMenu.innerHTML = '';
                     data.forEach((notificacao) => {
@@ -334,7 +340,16 @@
                         dropdownMenu.appendChild(card);
                     });
                 });
+
+            // Atualiza a contagem real
+            fetch('/notificacoes_contagem')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('notificationCount').textContent = data.nao_vistas;
+                });
         }
+
+
     </script>
 </body>
 </html>
