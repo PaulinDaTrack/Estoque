@@ -5,149 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Transferir entre Técnicos ou Estoque</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        /* 🔹 Define o estilo geral da página */
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            color: white;
-        }
-
-        /* 🔹 Criando um fundo translúcido para a área principal */
-        .content-box {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            max-width: 90%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* 🔹 Configuração do container */
-        .container {
-            height: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            width: 100%;
-        }
-
-        /* 🔹 Estilizando o título */
-        h2 {
-            margin-bottom: 0.6rem;
-            font-weight: 700;
-            font-size: 1.8rem;
-        }
-
-        /* 🔹 Estilização correta dos botões */
-        .btn-red, .btn-danger-custom {
-            width: 100%;
-            height: 2rem;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            font-family: Andale Mono, monospace;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s, transform 0.2s;
-            margin-top: 0.6rem;
-        }
-
-        .btn-red {
-            background: #1E3A8A;
-            border: 2px solid #1E3A8A;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-red:hover {
-            background: #162d5e;
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        .btn-danger-custom {
-            background: #8B0000;
-            border: none;
-            color: white;
-        }
-
-        .btn-danger-custom:hover {
-            background: #A52A2A;
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        /* 🔹 Estilização do formulário */
-        .form-frame {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 20px;
-            margin-top: 1rem;
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .form-group {
-            width: 100%;
-            text-align: left;
-            font-size: 0.8rem;
-            margin-bottom: 0.6rem;
-        }
-
-        input.form-control, select.form-control {
-            font-size: 0.8rem !important;
-            height: 30px !important;
-            padding: 4px 8px !important;
-        }
-
-        /* 🔹 Área de seleção rolável */
-        .scrollable-menu {
-            max-height: 200px;
-            overflow-y: auto;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 10px;
-        }
-
-        /* 🔹 Mensagem de erro */
-        .text-danger {
-            font-size: 14px;
-        }
-
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='transferir_tecnico_para_outro.css') }}">
 </head>
 <body>
     <div class="container">
         <div class="content-box">
             <h2>TRANSFERIR ENTRE TÉCNICOS OU ESTOQUE</h2>
-
-            <!-- 🔹 Formulário de Transferência -->
             <div class="form-frame">
                 <form method="POST" action="{{ url_for('transferir_tecnico_para_outro') }}" onsubmit="return validarSelecao()" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                     <div class="form-group">
-                        <label for="tecnico_origem">Técnico de Origem:</label>
+                        <label for="tecnico_origem">Técnico de Origem</label>
                         <select name="tecnico_origem" id="tecnico_origem" class="form-control" onchange="atualizarEquipamentosDisponiveis()">
                             {% for tecnico in tecnicos %}
                             <option value="{{ tecnico }}">{{ tecnico }}</option>
@@ -173,14 +40,14 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="acao">Ação:</label>
+                        <label for="acao">Ação</label>
                         <select name="acao" id="acao" class="form-control" onchange="atualizarVisibilidadeTecnicoDestino()">
                             <option value="Enviar para teste">Enviar para teste</option>
                             <option value="Transferir para outro técnico">Transferir para outro técnico</option>
                         </select>
                     </div>
                     <div class="form-group" id="tecnico_destino_group" style="display: none;">
-                        <label for="tecnico_destino">Técnico de Destino:</label>
+                        <label for="tecnico_destino">Técnico de Destino</label>
                         <select name="tecnico_destino" id="tecnico_destino" class="form-control">
                             {% for tecnico in tecnicos %}
                             <option value="{{ tecnico }}">{{ tecnico }}</option>
@@ -188,33 +55,19 @@
                         </select>
                     </div>
                     <div id="erro-selecao" class="text-danger"></div>
-
-                    <!-- 🔹 Botões "Salvar" e "Voltar" agora juntos dentro do formulário -->
                     <button type="submit" class="btn btn-red">Salvar</button>
                     <a href="{{ url_for('index') }}" class="btn btn-danger-custom">Voltar</a>
                 </form>
             </div>
         </div>
     </div>
-
     <script>
         function atualizarVisibilidadeTecnicoDestino() {
             const acao = document.getElementById('acao').value;
             const tecnicoDestinoGroup = document.getElementById('tecnico_destino_group');
             tecnicoDestinoGroup.style.display = acao === 'Transferir para outro técnico' ? 'block' : 'none';
         }
-
         document.addEventListener('DOMContentLoaded', atualizarVisibilidadeTecnicoDestino);
-
-        function adicionarEquipamento(id) {
-            const input = document.getElementById('id_equipamento');
-            const ids = input.value ? input.value.split(';').map(id => id.trim()) : [];
-            if (!ids.includes(id)) {
-                ids.push(id);
-                input.value = ids.join('; ');
-            }
-        }
-
         function validarSelecao() {
             var selecionados = document.querySelectorAll('input[name="ids_equipamentos[]"]:checked');
             var erroSelecao = document.getElementById('erro-selecao');
@@ -222,19 +75,14 @@
                 erroSelecao.textContent = 'Você deve selecionar no mínimo 1 e no máximo 20 equipamentos.';
                 return false;
             }
-            // Adicionar os IDs dos equipamentos selecionados ao campo de texto
-            var ids = Array.from(selecionados).map(cb => cb.value).join('; ');
-            document.getElementById('id_equipamento').value = ids;
             erroSelecao.textContent = '';
             return true;
         }
-
         function selecionarTodos() {
             var checkboxes = document.querySelectorAll('input[name="ids_equipamentos[]"]');
             var selectAllCheckbox = document.getElementById('select_all');
             checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
         }
-
         function filtrarEquipamentos() {
             var input = document.getElementById('pesquisar_equipamento').value;
             var ids = input.split(';').map(id => id.trim());
@@ -247,14 +95,12 @@
                 }
             });
         }
-
         document.getElementById('pesquisar_equipamento').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 this.value += ';';
             }
         });
-
         document.getElementById('tecnico_origem').addEventListener('change', function() {
             const tecnicoOrigem = this.value;
             fetch(`/equipamentos_com_tecnico?tecnico=${tecnicoOrigem}`)
@@ -272,7 +118,6 @@
                 })
                 .catch(error => console.error('Erro ao buscar equipamentos:', error));
         });
-
         function atualizarEquipamentosDisponiveis() {
             const tecnicoOrigem = document.getElementById('tecnico_origem').value;
             fetch(`/equipamentos_com_tecnico?tecnico=${tecnicoOrigem}`)

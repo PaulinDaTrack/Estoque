@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from flask_caching import Cache
 from mysql.connector import pooling  # Nova importação para pooling
 import json  # Nova importação para lidar com notificações
+from contextlib import contextmanager
 
 load_dotenv()
 TIMEZONE = timezone(timedelta(hours=-4))  # Definindo fuso horário GMT-4
@@ -36,32 +37,38 @@ connection_pool = pooling.MySQLConnectionPool(pool_name="mypool", pool_size=5, *
 def conectar_banco():
     return connection_pool.get_connection()
 
+@contextmanager
+def db_cursor(dictionary=False, buffered=False):
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=dictionary, buffered=buffered)
+    try:
+        yield cursor
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
 def criar_tabela_usuarios():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50) NOT NULL,
-            password VARCHAR(50) NOT NULL
-        )
-    ''')
-    conexao.commit()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL,
+                password VARCHAR(50) NOT NULL
+            )
+        ''')
 
 def adicionar_usuario_padrao():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE username = %s", ('trackland@hotmail.com',))
-    if cursor.fetchone()[0] == 0:
-        cursor.execute('''
-            INSERT INTO usuarios (username, password)
-            VALUES (%s, %s)
-        ''', (os.getenv('LOGIN'), os.getenv('LOGIN_PASSWORD')))
-        conexao.commit()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM usuarios WHERE username = %s", ('trackland@hotmail.com',))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute('''
+                INSERT INTO usuarios (username, password)
+                VALUES (%s, %s)
+            ''', (os.getenv('LOGIN'), os.getenv('LOGIN_PASSWORD')))
 
 # Chamar a função para criar a tabela ao iniciar a aplicação
 criar_tabela_usuarios()
@@ -70,64 +77,51 @@ criar_tabela_usuarios()
 adicionar_usuario_padrao()
 
 def criar_indices():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SET SESSION MAX_STATEMENT_TIME=300000")  # Aumentar o tempo máximo de execução para 300 segundos
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_status ON equipamentos (status)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_data_movimentacao ON movimentacoes (data_movimentacao)")
-    conexao.commit()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        # Removido SET SESSION MAX_STATEMENT_TIME e IF NOT EXISTS dos índices
+        try:
+            cursor.execute("CREATE INDEX idx_status ON equipamentos (status)")
+        except Exception:
+            pass  # Ignora erro se índice já existir
+        try:
+            cursor.execute("CREATE INDEX idx_data_movimentacao ON movimentacoes (data_movimentacao)")
+        except Exception:
+            pass  # Ignora erro se índice já existir
 
 # Chamar a função para criar os índices ao iniciar a aplicação
 criar_indices()
 
 @cache.cached(timeout=60, key_prefix='listar_tecnicos')
 def listar_tecnicos():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT DISTINCT nome_tecnico FROM tecnicos")
-    tecnicos = cursor.fetchall()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute("SELECT DISTINCT nome_tecnico FROM tecnicos")
+        tecnicos = cursor.fetchall()
     return [tecnico[0] for tecnico in tecnicos]
 
 @cache.cached(timeout=60, key_prefix='listar_operadoras')
 def listar_operadoras():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT DISTINCT operadora FROM equipamentos")
-    operadoras = cursor.fetchall()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute("SELECT DISTINCT operadora FROM equipamentos")
+        operadoras = cursor.fetchall()
     return [operadora[0] for operadora in operadoras]
 
 @cache.cached(timeout=60, key_prefix='listar_orgaos')
 def listar_orgaos():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT DISTINCT orgao FROM equipamentos")
-    orgaos = cursor.fetchall()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute("SELECT DISTINCT orgao FROM equipamentos")
+        orgaos = cursor.fetchall()
     return [orgao[0] for orgao in orgaos]
 
 def listar_equipamentos_com_tecnico(tecnico):
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT id_equipamento FROM equipamentos WHERE status = %s", (tecnico,))
-    equipamentos = cursor.fetchall()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute("SELECT id_equipamento FROM equipamentos WHERE status = %s", (tecnico,))
+        equipamentos = cursor.fetchall()
     return [equip[0] for equip in equipamentos]
 
 def listar_equipamentos_em_estoque():
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT id_equipamento FROM equipamentos WHERE status = 'EM ESTOQUE'")
-    equipamentos = cursor.fetchall()
-    cursor.close()
-    conexao.close()
+    with db_cursor() as cursor:
+        cursor.execute("SELECT id_equipamento FROM equipamentos WHERE status = 'EM ESTOQUE'")
+        equipamentos = cursor.fetchall()
     return [equip[0] for equip in equipamentos]
 
 @app.route('/')
@@ -1370,10 +1364,39 @@ scheduler.start()
 # Garantir que o agendador seja desligado corretamente ao encerrar a aplicação
 atexit.register(lambda: scheduler.shutdown(wait=False))
 
+@app.route('/dashboard_info')
+def dashboard_info():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+        # Equipamentos em estoque
+        cursor.execute("SELECT COUNT(*) FROM equipamentos WHERE status = 'EM ESTOQUE'")
+        equipamentos = cursor.fetchone()[0]
+        # SIMCards cadastrados
+        cursor.execute("SELECT COUNT(*) FROM simcards")
+        simcards = cursor.fetchone()[0]
+        # Instalações
+        cursor.execute("SELECT COUNT(*) FROM movimentacoes WHERE tipo_movimentacao = 'Instalação'")
+        instalacoes = cursor.fetchone()[0]
+        # Desinstalações
+        cursor.execute("SELECT COUNT(*) FROM movimentacoes WHERE tipo_movimentacao = 'Desinstalação'")
+        desinstalacoes = cursor.fetchone()[0]
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conexao.close()
+    return jsonify({
+        "equipamentos": equipamentos,
+        "simcards": simcards,
+        "instalacoes": instalacoes,
+        "desinstalacoes": desinstalacoes
+    })
+
 if __name__ == "__main__":
     try:
         importar_reinstalacoes_antigas_para_notificacoes()
-        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=False, use_reloader=False)
+        app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=True, use_reloader=True)
     finally:
         if scheduler.running:
             try:

@@ -232,36 +232,179 @@
         .dropdown-item:hover {
             background: #f5f5f5;
         }
+
+        /* Estilos da sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 250px;
+            background: rgba(27, 1, 80, 0.9);
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 1000;
+            transform: translateX(-100%); /* Oculta a sidebar por padrão */
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.active {
+            transform: translateX(0); /* Mostra a sidebar quando ativa */
+        }
+
+        .sidebar-menu {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centraliza os botões verticalmente */
+        }
+
+        .sidebar button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            margin-left: 0; /* Sem margem inicial */
+            padding: 20px;
+            width: 100%; /* Largura total por padrão */
+            transition: margin-left 0.3s ease; /* Transição suave para a margem */
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 270px; /* Espaço para a sidebar quando aberta */
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .dashboard-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .dashboard-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1b0150;
+        }
+
+        /* Estilos do botão de menu */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(27, 1, 80, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1100;
+            transition: background 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(27, 1, 80, 1);
+        }
+
+        .menu-toggle i {
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Estilos específicos para cada card do dashboard */
+        .dashboard-card .dashboard-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .estoque-card {
+            border-left: 5px solid #28a745;
+        }
+
+        .simcard-card {
+            border-left: 5px solid #007bff;
+        }
+
+        .instalacoes-card {
+            border-left: 5px solid #ffc107;
+        }
+
+        .desinstalacoes-card {
+            border-left: 5px solid #dc3545;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="menu">
-            <div class="text-center mt-4 d-flex flex-column align-items-center">
-                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_equipamento'">
-                    <i class="fas fa-box"></i> Inventário de Equipamento
-                </button>
-                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_simcard'">
-                    <i class="fas fa-box"></i> Inventário de SIMCard
-                </button>
-                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_equipamentos_portal'">
-                    <i class="fas fa-file-alt"></i> Cadastrar Equipamentos
-                </button>
-                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/transferir_estoque_para_tecnico'">
-                    <i class="fas fa-exchange-alt"></i> Transferir para Técnico
-                </button>
-                <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/transferir_tecnico_para_outro'">
-                    <i class="fas fa-exchange-alt"></i> Devolução/Transferência
-                </button>
-                <button class="btn btn-primary mb-2 btn-custom" onclick="window.location.href='/visualizar_estoque'">
-                    <i class="fas fa-eye"></i> Visualizar Estoque
-                </button>
-                <button class="btn btn-primary mb-2 btn-custom" onclick="window.location.href='/visualizar_movimentacoes'">
-                    <i class="fas fa-eye"></i> Visualizar Movimentações
-                </button>
-                <button class="btn btn-danger mb-2 btn-custom" onclick="confirmLogout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
+    <div class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-menu">
+            <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_equipamento'">
+                <i class="fas fa-box"></i> Inventário de Equipamento
+            </button>
+            <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_simcard'">
+                <i class="fas fa-box"></i> Inventário de SIMCard
+            </button>
+            <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/cadastrar_equipamentos_portal'">
+                <i class="fas fa-file-alt"></i> Cadastrar Equipamentos
+            </button>
+            <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/transferir_estoque_para_tecnico'">
+                <i class="fas fa-exchange-alt"></i> Transferir para Técnico
+            </button>
+            <button class="btn btn-success mb-2 btn-custom" onclick="window.location.href='/transferir_tecnico_para_outro'">
+                <i class="fas fa-exchange-alt"></i> Devolução/Transferência
+            </button>
+            <button class="btn btn-primary mb-2 btn-custom" onclick="window.location.href='/visualizar_estoque'">
+                <i class="fas fa-eye"></i> Visualizar Estoque
+            </button>
+            <button class="btn btn-primary mb-2 btn-custom" onclick="window.location.href='/visualizar_movimentacoes'">
+                <i class="fas fa-eye"></i> Visualizar Movimentações
+            </button>
+            <button class="btn btn-danger mb-2 btn-custom" onclick="confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+    <div class="main-content" id="mainContent">
+        <div class="dashboard">
+            <div class="dashboard-card estoque-card" id="equipamentos-card">
+                <div class="dashboard-icon"><i class="fas fa-warehouse"></i></div>
+                <h5>ESTOQUE</h5>
+                <span class="dashboard-value" id="equipamentos-count">-</span>
+            </div>
+            <div class="dashboard-card simcard-card" id="simcards-card">
+                <div class="dashboard-icon"><i class="fas fa-sim-card"></i></div>
+                <h5>SIMCards</h5>
+                <span class="dashboard-value" id="simcards-count">-</span>
+            </div>
+            <div class="dashboard-card instalacoes-card" id="instalacoes-card">
+                <div class="dashboard-icon"><i class="fas fa-tools"></i></div>
+                <h5>Instalações</h5>
+                <span class="dashboard-value" id="instalacoes-count">-</span>
+            </div>
+            <div class="dashboard-card desinstalacoes-card" id="desinstalacoes-card">
+                <div class="dashboard-icon"><i class="fas fa-trash-restore"></i></div>
+                <h5>Desinstalações</h5>
+                <span class="dashboard-value" id="desinstalacoes-count">-</span>
             </div>
         </div>
     </div>
@@ -272,15 +415,14 @@
     </div>
     <div class="dropdown-menu" id="dropdownMenu">
     </div>
-
     <div class="overlay" id="overlay"></div>
-<div class="floating-card" id="logoutCard">
-    <p class="logout-text">Você tem certeza que deseja sair?</p>
-    <div class="logout-buttons">
-        <button class="btn btn-danger logout-btn" onclick="logout()">Sim</button>
-        <button class="btn btn-secondary logout-btn cancel-btn" onclick="closeCard()">Não</button>
+    <div class="floating-card" id="logoutCard">
+        <p class="logout-text">Você tem certeza que deseja sair?</p>
+        <div class="logout-buttons">
+            <button class="btn btn-danger logout-btn" onclick="logout()">Sim</button>
+            <button class="btn btn-secondary logout-btn cancel-btn" onclick="closeCard()">Não</button>
+        </div>
     </div>
-</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -288,9 +430,10 @@
             buttons.forEach((button, index) => {
                 setTimeout(() => {
                     button.classList.add('fade-in');
-                }, index * 200); // Atraso para cada botão
+                }, index * 100);
             });
             fetchNotificacoes();
+            fetchDashboard();
         });
 
         function confirmLogout() {
@@ -307,7 +450,6 @@
             window.location.href = '/logout';
         }
 
-   
         function toggleDropdown() {
             const dropdownMenu = document.getElementById('dropdownMenu');
             const notificationIcon = document.querySelector('.notification-icon');
@@ -324,8 +466,6 @@
                     });
             }
         }
-
-
 
         function fetchNotificacoes() {
             fetch('/notificacoes')
@@ -349,7 +489,36 @@
                 });
         }
 
+        function fetchDashboard() {
+            fetch('/dashboard_info')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('equipamentos-count').textContent = '-';
+                        document.getElementById('simcards-count').textContent = '-';
+                        document.getElementById('instalacoes-count').textContent = '-';
+                        document.getElementById('desinstalacoes-count').textContent = '-';
+                    } else {
+                        document.getElementById('equipamentos-count').textContent = data.equipamentos ?? '-';
+                        document.getElementById('simcards-count').textContent = data.simcards ?? '-';
+                        document.getElementById('instalacoes-count').textContent = data.instalacoes ?? '-';
+                        document.getElementById('desinstalacoes-count').textContent = data.desinstalacoes ?? '-';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('equipamentos-count').textContent = '-';
+                    document.getElementById('simcards-count').textContent = '-';
+                    document.getElementById('instalacoes-count').textContent = '-';
+                    document.getElementById('desinstalacoes-count').textContent = '-';
+                });
+        }
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            sidebar.classList.toggle('active');
+            mainContent.classList.toggle('sidebar-open');
+        }
     </script>
 </body>
 </html>

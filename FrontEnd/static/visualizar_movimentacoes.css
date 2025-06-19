@@ -13,6 +13,13 @@ html, body {
     background-repeat: no-repeat;
 }
 
+body {
+    min-height: 100vh;
+    background: linear-gradient(120deg, #2a0845 0%, #6441a5 100%);
+    font-family: 'Andale Mono', monospace;
+    color: #fff;
+}
+
 .container {
     height: 100%;
     display: flex;
@@ -24,15 +31,65 @@ html, body {
 }
 
 .table {
-    color: white;
+    color: #fff;
+    background: rgba(0,0,0,0.7);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 1.05rem;
     width: 100%;
     margin: auto;
     font-family: Andale Mono, monospace;
     border-collapse: collapse;
 }
 
+.table thead, .table thead th {
+    background: #2a0845 !important;
+    color: #fff !important;
+    border-bottom: 2px solid #6441a5;
+    font-weight: bold;
+    font-size: 1.08rem;
+    letter-spacing: 0.5px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    box-shadow: none;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(100,65,165,0.25);
+    transition: background 0.2s;
+}
+
+.linha-mov.alerta {
+    background: rgba(255, 0, 0, 0.25) !important;
+    color: #fff;
+    font-weight: bold;
+}
+
 .pagination {
     justify-content: center;
+    margin-top: 10px;
+}
+
+.page-item.active .page-link {
+    background: #6441a5;
+    border-color: #6441a5;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+.page-link {
+    color: #6441a5;
+    background: #fff;
+    border-radius: 8px;
+    margin: 0 2px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.page-link:hover {
+    background: #6441a5;
+    color: #fff;
 }
 
 .btn-red {
@@ -60,24 +117,35 @@ html, body {
 }
 
 .filter-input, .filter-select {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border: 1px solid #6441a5;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 0;
     width: 100%;
     padding: 5px;
-    margin-bottom: 1px;
-    background-color: transparent;
-    color: white;
-    border: 1px solid white;
-    font-family: Andale Mono, monospace;
+}
+
+.filter-input::placeholder {
+    color: #ccc;
 }
 
 .filter-select option {
-    color: black;
+    color: #222;
 }
 
-.filter-menu {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    width: 100%;
+.filter-menu, .filtro-barra {
+    background: rgba(44, 19, 80, 0.92) !important;
+    box-shadow: 0 2px 8px rgba(100,65,165,0.10);
+    border-radius: 16px;
+    border: none !important;
+}
+
+.filtro-barra {
+    margin-bottom: 0;
+    padding: 18px 18px 10px 18px;
+    box-shadow: none;
 }
 
 .form-group {
@@ -98,20 +166,22 @@ html, body {
 }
 
 .frame {
-    padding: 20px;
-    border-radius: 20px; /* Bordas arredondadas */
-    background-color: rgba(0, 0, 0, 0.5);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    background: rgba(20, 20, 40, 0.92);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    padding: 32px 24px 24px 24px;
+    max-width: 1100px;
     width: 100%;
-    max-height: 80vh;
+    margin: 40px auto;
+    border: 1.5px solid rgba(255,255,255,0.08);
 }
 
 .scrollable-content {
     overflow-y: auto;
-    max-height: 50vh;
-    background: rgba(0, 0, 0, 0.5); /* Fundo levemente escuro para melhor leitura */
+    max-height: 48vh;
+    background: transparent;
     border-radius: 10px;
-    padding: 10px;
+    padding: 0;
 }
 
 .btn-voltar {
@@ -121,4 +191,147 @@ html, body {
 
 .alerta {
     background-color: rgba(255, 0, 0, 0.3); /* Fundo vermelho claro para destacar */
+}
+
+.btn-danger-custom {
+    background: linear-gradient(90deg, #8B0000 0%, #A52A2A 100%);
+    border: none;
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    font-family: Andale Mono, monospace;
+    transition: background 0.3s, transform 0.2s;
+    width: 350px;
+    height: 50px;
+    color: white;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(139,0,0,0.15);
+}
+
+.btn-danger-custom:hover {
+    background: linear-gradient(90deg, #A52A2A 0%, #8B0000 100%);
+    transform: translateY(-3px) scale(1.04);
+    color: #fff;
+}
+
+.filtro-input {
+    border: 1.5px solid #6441a5 !important;
+    background: rgba(70, 41, 120, 0.85) !important;
+}
+
+.filtro-campo {
+    min-width: 120px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+}
+.filtro-input {
+    background: rgba(255,255,255,0.08) !important;
+    color: #fff !important;
+    border: 1.5px solid #6441a5 !important;
+    border-radius: 8px !important;
+    font-size: 1rem;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-shadow: none;
+}
+.filtro-input:focus {
+    border: 2px solid #a084e8 !important;
+    box-shadow: 0 0 0 2px #6441a533;
+    background: rgba(255,255,255,0.13) !important;
+    color: #fff !important;
+}
+.btn-filtrar {
+    background: linear-gradient(90deg, #6441a5 0%, #2a0845 100%) !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(100,65,165,0.10);
+    transition: background 0.2s, transform 0.2s;
+    letter-spacing: 1px;
+}
+.btn-filtrar:hover {
+    background: linear-gradient(90deg, #2a0845 0%, #6441a5 100%) !important;
+    color: #fff !important;
+    transform: translateY(-2px) scale(1.04);
+}
+.filtro-btn-icone {
+    border-radius: 8px;
+    border: 1.5px solid #fff;
+    background: transparent;
+    color: #fff;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: background 0.2s, color 0.2s;
+    margin-right: 8px;
+}
+.filtro-btn-icone:hover {
+    background: #6441a5;
+    color: #fff;
+}
+.filtro-input, .filtro-input option, select.filtro-input, select.filtro-input option {
+    background: rgba(44, 19, 80, 0.95) !important;
+    color: #fff !important;
+}
+
+select.filtro-input:focus, .filtro-input:focus {
+    background: rgba(70, 41, 120, 0.98) !important;
+    color: #fff !important;
+}
+
+/* Para navegadores baseados em Webkit (Chrome, Edge, Safari) */
+select.filtro-input::-webkit-dropdown {
+    background: #2a0845 !important;
+    color: #fff !important;
+}
+
+/* Para Firefox */
+select.filtro-input:-moz-focusring {
+    color: #fff !important;
+    background: #2a0845 !important;
+}
+
+@media (max-width: 900px) {
+    .frame {
+        padding: 10px 2vw;
+        max-width: 98vw;
+    }
+    .btn-danger-custom {
+        width: 90vw;
+        font-size: 16px;
+    }
+    .table {
+        font-size: 0.95rem;
+    }
+    .filtro-barra {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 2vw;
+    }
+    .filtro-campo {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    .btn-filtrar {
+        width: 100%;
+        margin-top: 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    .frame {
+        padding: 2vw 1vw;
+        max-width: 100vw;
+    }
+    .btn-danger-custom {
+        width: 98vw;
+        font-size: 15px;
+    }
+    .table {
+        font-size: 0.85rem;
+    }
 }

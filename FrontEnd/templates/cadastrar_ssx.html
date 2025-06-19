@@ -5,188 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Equipamento no Portal SSX</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        /* 🔹 Define o estilo geral da página */
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Impede rolagem inesperada */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: url("{{ url_for('static', filename='fundoInicial4.png') }}"); /* Define a imagem de fundo */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            color: white;
-        }
-
-        /* 🔹 Criando um fundo translúcido para a área principal */
-        .content-box {
-            background: rgba(0, 0, 0, 0.6); /* Fundo preto semi-transparente */
-            padding: 30px; /* Adiciona espaçamento interno */
-            border-radius: 20px; /* Arredonda as bordas */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Adiciona uma sombra ao redor */
-            text-align: center; /* Centraliza o texto dentro da caixa */
-            max-width: 90%; /* Garante que a caixa não ultrapasse 90% da largura da tela */
-            display: flex; /* Usa flexbox */
-            flex-direction: column; /* Organiza os elementos em coluna */
-            justify-content: center; /* Centraliza verticalmente */
-            align-items: center; /* Centraliza horizontalmente */
-        }
-
-        /* 🔹 Configuração do container */
-        .container {
-            height: auto; /* Ajusta a altura automaticamente */
-            display: flex; /* Usa flexbox */
-            flex-direction: column; /* Organiza os elementos em coluna */
-            justify-content: center; /* Centraliza verticalmente */
-            align-items: center; /* Centraliza horizontalmente */
-            padding: 20px; /* Adiciona espaçamento interno */
-            width: 100%; /* Garante que ocupe toda a largura disponível */
-        }
-
-        /* 🔹 Estilizando o título */
-        h2 {
-            margin-bottom: 0.6rem; /* Aumenta o espaço abaixo do título */
-            font-weight: 700; /* Negrito */
-            font-size: 1.8rem;
-        }
-
-        /* 🔹 Estilização correta dos botões */
-        .btn-red {
-            width: 500px;
-            height: 2rem;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            background: #1E3A8A; /* Azul claro */
-            font-family: Andale Mono, monospace;
-            border-radius: 20px; /* Bordas arredondadas */
-            border: 2px solid #1E3A8A; /* Borda azul clara */
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-            transition: background 0.3s, transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 10px auto; /* Centraliza horizontalmente */
-        }
-
-        /* 🔹 Efeito ao passar o mouse nos botões */
-        .btn-red:hover {
-            background: #1E3A8A; /* Azul claro */
-            transform: translateY(-5px); /* Efeito de elevação */
-            color: white;
-        }
-
-        /* 🔹 Botão "Voltar" estilizado */
-        .btn-danger-custom {
-            background: #8B0000;
-            border: none;
-            font-size: 0.8rem;
-            padding: 10px 20px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-transform: uppercase;
-            font-family: Andale Mono, monospace;
-            transition: background 0.3s, transform 0.2s;
-            width: 500px;
-            height: 2rem;
-            color: white;
-            margin-top: 0.6rem;
-        }
-
-        /* 🔹 Efeito ao passar o mouse no botão "Voltar" */
-        .btn-danger-custom:hover {
-            background: #A52A2A;
-            transform: translateY(-5px);
-            color: white;
-        }
-
-        /* 🔹 Botão "Gerar Número Aleatório" */
-        .btn-secondary-custom {
-            background: #1E3A8A; /* Azul claro */
-            border: none;
-            font-size: 0.8rem;
-            padding: 10px 20px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-transform: uppercase;
-            font-family: Andale Mono, monospace;
-            transition: background 0.3s, transform 0.2s;
-            width: 100%; /* Garante que ocupe toda a largura disponível */
-            height: 2rem;
-            color: white;
-            margin-top: 0.2rem;
-        }
-
-        /* 🔹 Efeito hover */
-        .btn-secondary-custom:hover {
-            background: #1E3A8A; /* Azul claro */
-            transform: translateY(-3px); /* Efeito de elevação */
-            color: white;
-        }
-
-
-        /* 🔹 Estilização do formulário */
-        .form-frame {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 20px;
-            margin-top: 1rem;
-            width: 100%;
-            max-width: 800px; /* Ajuste para manter proporção */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .form-group {
-            width: 100%;
-            text-align: left;
-            font-size: 0.8rem;
-        }
-
-        input.form-control, select.form-control, textarea.form-control {
-            font-size: 0.8rem !important; /* Reduz o tamanho da fonte */
-            height: 30px !important; /* Reduz a altura dos campos */
-            padding: 4px 8px !important; /* Ajusta o espaçamento interno */
-        }
-
-        textarea.form-control {
-            height: 60px !important; /* Reduz a altura */
-            resize: vertical !important; /* Permite redimensionamento apenas vertical */
-            overflow-y: auto !important; /* Permite rolagem vertical quando necessário */
-        }
-
-        .floating-card {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            display: none; /* Inicialmente escondido */
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='cadastrar_ssx.css') }}">
     <script>
-        function gerarNumeroAleatorio() {
-            let numeroAleatorio = '';
-            for (let i = 0; i < 15; i++) {
-                numeroAleatorio += Math.floor(Math.random() * 10);
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('btn-gerar-numero');
+            if (btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    let numeroAleatorio = '';
+                    for (let i = 0; i < 15; i++) {
+                        numeroAleatorio += Math.floor(Math.random() * 10);
+                    }
+                    document.getElementById('telefone_completo').value = numeroAleatorio;
+                });
             }
-            document.getElementById('telefone_completo').value = numeroAleatorio;
-        }
-
+        });
         function showFloatingCard(message, isSuccess) {
             const card = document.getElementById('floating-card');
             card.innerText = message;
@@ -226,7 +59,7 @@
                     <div class="form-group">
                         <label for="telefone_completo">Telefone (DDI+DDD+Número)</label>
                         <input type="text" class="form-control" id="telefone_completo" name="telefone_completo">
-                        <button type="button" class="btn btn-secondary-custom mt-2" onclick="gerarNumeroAleatorio()">Gerar Número Aleatório</button>
+                        <button type="button" id="btn-gerar-numero" class="btn btn-secondary-custom mt-2">Gerar Número Aleatório</button>
                     </div>
                     <div class="form-group">
                         <label for="tracker_template_code">Modelo</label>

@@ -1,93 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
 /* 🔹 Mantendo o fundo da imagem como no padrão desejado */
 html, body {
     height: 100%;
+    width: 100%;
     margin: 0;
     padding: 0;
-    background-color: #000;
-    /* background-image: url("{{ url_for('static', filename='fundoInicial3.png') }}"); */
-    background-image: url("/static/fundoInicial3.png");
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url("/static/fundoInicial4.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    color: white
+    color: white;
+    font-family: 'Montserrat', Andale Mono, monospace;
 }
 
 /* 🔹 Criando um fundo escuro translúcido apenas para a parte principal */
 .content-box {
-    background: rgba(0, 0, 0, 0.6); /* Fundo preto translúcido */
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    background: rgba(10, 10, 40, 0.88);
+    padding: 48px 40px 40px 40px;
+    border-radius: 28px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     text-align: center;
-    width: 600px; /* Largura fixa */
-    max-width: 90%;
-}
-
-.container {
-    height: 100%;
+    max-width: 480px;
+    min-width: 320px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    width: 100%;
+    transition: box-shadow 0.3s;
+}
+.content-box:hover {
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
 }
 
 /* 🔹 Estilizando o título para melhor legibilidade */
 h2 {
-    color: white;
-    font-size: 28px;
-    font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 1.2rem;
+    font-weight: 700;
+    font-size: 2.1rem;
+    letter-spacing: 1px;
+    color: #fff;
+    text-shadow: 0 2px 8px #0008;
 }
 
 /* 🔹 Botões estilizados de acordo com o padrão desejado */
-.btn-custom {
-    width: 500px; /* Largura fixa */
-    height: 50px;
-    font-size: 18px;
-    text-transform: uppercase;
-    background: #1b0150; /* Roxo escuro */
-    font-family: Andale Mono, monospace;
-    border-radius: 20px; /* Bordas arredondadas */
-    border: 2px solid #1E3A8A; /* Borda azul mais clara */
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Pequena sombra no texto */
-    transition: background 0.3s, opacity 0.5s, transform 0.2s;
-    display: block;
-    margin: 10px auto;
+.btn-group-custom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50px;
+    overflow: hidden;
+    border: 2px solid #1E3A8A;
+    margin: 20px auto 0 auto;
+    width: 100%;
+    max-width: 380px;
+    background: linear-gradient(90deg, #8f00ff 0%, #4f8cff 100%);
+    min-height: 3.2rem;
+    position: relative;
 }
-
-/* 🔹 Efeito hover dos botões */
-.btn-custom:hover {
-    background: #1E3A8A; /* Azul mais claro no hover */
-    transform: translateY(-5px); /* Efeito de elevação */
+.btn-group-custom > .btn-red {
+    flex: 1 1 50%;
+    min-width: 0;
+    width: 50%;
+    height: 3.2rem;
+    font-size: 1.08rem;
+    text-transform: uppercase;
+    font-family: 'Montserrat', Andale Mono, monospace;
+    color: white;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    background-clip: padding-box;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.18);
+    box-shadow: none;
+    letter-spacing: 1px;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: normal;
+    padding: 0 8px;
+    z-index: 1;
+}
+.btn-group-custom > .btn-red:focus {
+    outline: 2px solid #fff;
+}
+.btn-group-custom > .btn-red:first-child {
+    border-radius: 50px 0 0 50px;
+}
+.btn-group-custom > .btn-red:last-child {
+    border-radius: 0 50px 50px 0;
+}
+.separator {
+    width: 2px;
+    height: 80%;
+    background: rgba(255,255,255,0.25);
+    z-index: 2;
+}
+.btn-group-custom > .btn-red:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 8px 24px 0 rgba(143,0,255,0.22);
+    text-decoration: none;
 }
 
 /* 🔹 Botão "Voltar" estilizado */
-.btn-danger {
-    background: #8B0000;
+.btn-danger-custom {
+    background: linear-gradient(90deg, #a80000 0%, #d32f2f 100%);
+    width: 85%;
+    height: 2.3rem;
+    font-size: 1.13rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    font-family: 'Montserrat', Andale Mono, monospace;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 24px auto 0 auto;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 18px 0 rgba(139,0,0,0.13);
     border: none;
-    font-size: 18px;
-    padding: 10px 20px;
-    border-radius: 10px;
+    filter: brightness(0.98);
+}
+.btn-danger-custom:hover {
+    background: linear-gradient(90deg, #d32f2f 0%, #a80000 100%);
+    transform: translateY(-2px) scale(1.04);
+    color: #fff;
+    box-shadow: 0 8px 24px 0 rgba(139,0,0,0.22);
+    filter: brightness(1.08);
+    text-decoration: none;
 }
 
-.btn-danger:hover {
-    background: #A52A2A;
-}
-
-.btn-group-vertical {
-gap: 15px; /* Adiciona espaço entre os botões */
-}
-
-.btn-group-vertical .btn-custom {
-    border-radius: 20px !important; /* Força todas as bordas a serem arredondadas */
-    margin: 0; /* Remove margens padrão */
-}
-
-/* 🔹 Remove o estilo de agrupamento do Bootstrap */
-.btn-group-vertical > .btn {
-    border-radius: 20px !important;
+@media (max-width: 600px) {
+    .content-box {
+        max-width: 98vw;
+        min-width: unset;
+        padding: 18px 4vw 12px 4vw;
+    }
+    .btn-group-custom {
+        max-width: 98vw;
+    }
+    .btn-group-custom > .btn-red {
+        font-size: 0.98rem;
+        padding: 0 2px;
+    }
 }

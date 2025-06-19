@@ -1,60 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
 html, body {
     height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Evita rolagem inesperada */
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url("{{ url_for('static', filename='fundoInicial3.png') }}"); /* Fundo com imagem */
+    background-image: url("../static/fundoInicial4.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white;
+    font-family: 'Montserrat', Andale Mono, monospace;
 }
 
-.container {
-    height: 100%;
+.content-box {
+    background: rgba(10, 10, 40, 0.85);
+    padding: 56px 40px 40px 40px;
+    border-radius: 28px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    text-align: center;
+    max-width: 560px;
+    min-width: 380px;
     width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    transition: box-shadow 0.3s;
 }
 
-.form-container {
-    background: rgba(0, 0, 0, 0.8); /* Fundo escuro para o formulário */
-    padding: 20px;
-    border-radius: 20px; /* Bordas mais arredondadas para um visual moderno */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+.content-box:hover {
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
 }
 
-.form-group label {
-    color: white;
-    font-family: Andale Mono, monospace;
-    font-size: 16px;
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    width: 100vw;
 }
 
-.btn-primary {
-    width: 500px; /* Aumentando o tamanho dos botões */
-    height: 50px;
-    font-size: 18px;
+h1 {
+    margin-bottom: 1.2rem;
+    font-weight: 700;
+    font-size: 2.1rem;
+    letter-spacing: 1px;
+    color: #fff;
+    text-shadow: 0 2px 8px #0008;
+}
+
+.form-frame {
+    background-color: rgba(255, 255, 255, 0.07);
+    padding: 32px 24px 24px 24px;
+    border-radius: 18px;
+    margin-top: 0.5rem;
+    width: 100%;
+    max-width: 480px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
+}
+
+.form-group {
+    width: 100%;
+    text-align: left;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+label {
+    color: #e0e0e0;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.5px;
+    font-size: 1.08rem;
+}
+
+input.form-control, select.form-control {
+    font-size: 1.15rem !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    padding: 8px 16px !important;
+    border-radius: 12px !important;
+    border: 1.5px solid #1E3A8A !important;
+    background: rgba(255,255,255,0.12) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    transition: border 0.2s;
+}
+
+select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(30,58,138,0.95) url('data:image/svg+xml;utf8,<svg fill="white" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 0.75rem center/1.2em auto;
+    color: #fff !important;
+    padding-right: 2.5em !important;
+    border: 2px solid #4f8cff !important;
+    font-weight: 600;
+    min-height: 52px !important;
+    height: 52px !important;
+    font-size: 1.15rem !important;
+    box-shadow: 0 2px 8px 0 rgba(30,58,138,0.10);
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+select.form-control option {
+    background: #1E3A8A;
+    color: #fff;
+    font-weight: 600;
+}
+
+select.form-control:focus option {
+    background: #4f8cff;
+    color: #fff;
+}
+
+input.form-control:focus, select.form-control:focus {
+    border: 1.5px solid #4f8cff !important;
+    background: rgba(255,255,255,0.18) !important;
+    outline: none !important;
+}
+
+.btn-red, .btn-danger-custom {
+    width: 100%;
+    height: 2.7rem;
+    font-size: 1.13rem;
     text-transform: uppercase;
-    background: #1b0150; /* Azul escuro */
-    font-family: Andale Mono, monospace;
-    border-radius: 20px; /* Bordas mais arredondadas */
-    border: 2px solid #1E3A8A; /* Borda azul mais clara */
+    font-family: 'Montserrat', Andale Mono, monospace;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    margin-top: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 18px 0 rgba(30,58,138,0.13);
+    border: none;
+    filter: brightness(0.98);
+}
+
+.btn-red {
+    background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
     color: white;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Sombra no texto */
-    transition: background 0.3s, opacity 0.5s, transform 0.2s;
-    opacity: 0; /* Inicialmente invisível */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.18);
 }
 
-.btn-primary:hover {
-    background: #1E3A8A; /* Azul mais claro no hover */
-    transform: translateY(-5px); /* Efeito de relevo */
+.btn-red:hover {
+    background: linear-gradient(90deg, #2575fc 0%, #6a11cb 100%);
+    transform: translateY(-2px) scale(1.04);
+    color: #fff;
+    box-shadow: 0 8px 24px 0 rgba(106,17,203,0.22);
+    filter: brightness(1.08);
 }
 
-.btn-primary.fade-in {
-    opacity: 1; /* Tornar visível */
+.btn-danger-custom {
+    background: linear-gradient(90deg, #a80000 0%, #d32f2f 100%);
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.btn-danger-custom:hover {
+    background: linear-gradient(90deg, #d32f2f 0%, #a80000 100%);
+    transform: translateY(-2px) scale(1.04);
+    color: #fff;
+    box-shadow: 0 8px 24px 0 rgba(139,0,0,0.22);
+    filter: brightness(1.08);
+}
+
+.floating-card {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: rgba(0, 128, 0, 0.92);
+    color: white;
+    padding: 18px 28px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    display: none;
+    z-index: 1000;
+    font-size: 1.1rem;
+    font-family: 'Montserrat', Andale Mono, monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.floating-card.error {
+    background: rgba(255, 0, 0, 0.92);
+}
+
+@media (max-width: 600px) {
+    .content-box {
+        max-width: 98vw;
+        min-width: unset;
+        padding: 18px 4vw 12px 4vw;
+    }
+    .form-frame {
+        max-width: 98vw;
+        min-width: unset;
+        padding: 12px 2vw 8px 2vw;
+    }
+    h1 {
+        font-size: 1.2rem;
+    }
+    .floating-card {
+        top: 10px;
+        right: 10px;
+        font-size: 0.95rem;
+        padding: 10px 12px;
+    }
 }
