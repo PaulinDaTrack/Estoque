@@ -294,6 +294,7 @@
         </div>
         <div id="detalhes" class="mt-4" style="display: none;">
             <h3>Detalhes</h3>
+            <div id="local-atual" style="font-size: 1.1rem; font-weight: 700; color: #ffd700; margin-bottom: 8px; text-shadow: 0 1px 8px #1e3a8a55, 0 1px 0 #000;"></div>
             <button class="btn btn-secondary mb-2" onclick="toggleFilterMenu()">Mostrar/Esconder Filtros</button>
             <div id="filter-menu" class="filter-menu">
                 <table class="table table-striped">
@@ -436,6 +437,7 @@
                     const detalhesList = document.getElementById('detalhes-list');
                     const statusTable = document.getElementById('status-table');
                     const extraColumn = document.getElementById('extra-column');
+                    const localAtual = document.getElementById('local-atual');
                     statusTable.style.display = 'none';
                     detalhesList.innerHTML = '';
                     if (data.length > 0) {
@@ -444,6 +446,7 @@
                         } else {
                             extraColumn.style.display = 'none';
                         }
+                        localAtual.textContent = `Local Atual: ${status}`; // Exibir local atual
                         data.forEach(equip => {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `

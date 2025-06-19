@@ -78,37 +78,53 @@ adicionar_usuario_padrao()
 
 def criar_indices():
     with db_cursor() as cursor:
-        # Removido SET SESSION MAX_STATEMENT_TIME e IF NOT EXISTS dos índices
-        try:
-            cursor.execute("CREATE INDEX idx_status ON equipamentos (status)")
-        except Exception:
-            pass  # Ignora erro se índice já existir
-        try:
-            cursor.execute("CREATE INDEX idx_data_movimentacao ON movimentacoes (data_movimentacao)")
-        except Exception:
-            pass  # Ignora erro se índice já existir
+        indices = [
+            ("equipamentos", "idx_status", "status"),
+            ("equipamentos", "idx_id_equipamento", "id_equipamento"),
+            ("equipamentos", "idx_chip", "chip"),
+            ("equipamentos", "idx_operadora", "operadora"),
+            ("equipamentos", "idx_status_id", "status, id_equipamento"),
+            ("equipamentos", "idx_status_modelo", "status, modelo"),
+            ("movimentacoes", "idx_data_movimentacao", "data_movimentacao"),
+            ("movimentacoes", "idx_tipo_movimentacao", "tipo_movimentacao"),
+            ("movimentacoes", "idx_origem", "origem"),
+            ("movimentacoes", "idx_destino", "destino"),
+            ("simcards", "idx_chip_simcards", "chip"),
+            ("simcards", "idx_operadora_simcards", "operadora"),
+            ("notificacoes", "idx_visto", "visto"),
+            ("notificacoes", "idx_mensagem", "mensagem"),
+            ("ordens_servico", "idx_numero_os", "numero_os"),
+            ("ordens_servico", "idx_equipamentoId", "equipamentoId"),
+            ("ordens_servico", "idx_processado", "processado")
+        ]
+        for tabela, nome_indice, coluna in indices:
+            try:
+                cursor.execute(f"CREATE INDEX {nome_indice} ON {tabela} ({coluna})")
+            except Exception:
+                pass  # Ignora erro se índice já existir
+    # Dica: rode SHOW INDEX FROM <tabela> e EXPLAIN <query> no MySQL para análise manual
 
 # Chamar a função para criar os índices ao iniciar a aplicação
 criar_indices()
 
-@cache.cached(timeout=60, key_prefix='listar_tecnicos')
+@cache.cached(timeout=300, key_prefix='listar_tecnicos')
 def listar_tecnicos():
     with db_cursor() as cursor:
-        cursor.execute("SELECT DISTINCT nome_tecnico FROM tecnicos")
+        cursor.execute("SELECT nome_tecnico FROM tecnicos")
         tecnicos = cursor.fetchall()
     return [tecnico[0] for tecnico in tecnicos]
 
-@cache.cached(timeout=60, key_prefix='listar_operadoras')
+@cache.cached(timeout=300, key_prefix='listar_operadoras')
 def listar_operadoras():
     with db_cursor() as cursor:
-        cursor.execute("SELECT DISTINCT operadora FROM equipamentos")
+        cursor.execute("SELECT operadora FROM equipamentos GROUP BY operadora")
         operadoras = cursor.fetchall()
     return [operadora[0] for operadora in operadoras]
 
-@cache.cached(timeout=60, key_prefix='listar_orgaos')
+@cache.cached(timeout=300, key_prefix='listar_orgaos')
 def listar_orgaos():
     with db_cursor() as cursor:
-        cursor.execute("SELECT DISTINCT orgao FROM equipamentos")
+        cursor.execute("SELECT orgao FROM equipamentos GROUP BY orgao")
         orgaos = cursor.fetchall()
     return [orgao[0] for orgao in orgaos]
 
@@ -324,7 +340,7 @@ def equipamentos_com_tecnico():
     equipamentos = listar_equipamentos_com_tecnico(tecnico)
     return jsonify(equipamentos)
 
-@cache.cached(timeout=30, key_prefix='visualizar_estoque')
+@cache.cached(timeout=120, key_prefix='visualizar_estoque')
 @app.route('/visualizar_estoque')
 def visualizar_estoque():
     try:
@@ -505,23 +521,22 @@ def opcoes_filtros_equipamentos():
 @app.route('/filtrar_equipamentos')
 def filtrar_equipamentos():
     filtros = {
-        'id_equipamento': request.args.get('id'),  # Corrigir o nome do campo para id_equipamento
+        'id_equipamento': request.args.get('id'),
         'modelo': request.args.get('modelo'),
         'chip': request.args.get('chip'),
         'operadora': request.args.get('operadora'),
         'imei': request.args.get('imei'),
         'orgao': request.args.get('orgao'),
         'observacao': request.args.get('observacao'),
-        'status': request.args.get('status')  # Adicionar o filtro de status
+        'status': request.args.get('status')
     }
-    
     query = "SELECT * FROM equipamentos WHERE 1=1"
     valores = []
-    
     for campo, valor in filtros.items():
-        if (valor):
+        if valor:
+            # Trocar LIKE '%valor%' por LIKE 'valor%' para uso de índice
             query += f" AND {campo} LIKE %s"
-            valores.append(f"%{valor}%")
+            valores.append(f"{valor}%")
     
     try:
         conexao = conectar_banco()
