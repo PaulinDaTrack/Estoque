@@ -85,51 +85,100 @@
             color: white;
         }
 
+        /* 🔹 Estilos para a barra de filtros */
+        .filtro-barra {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .filtro-input {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .filtro-input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            color: black;
+        }
+
+        .filtro-btn-icone {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .filtro-btn-icone:hover {
+            color: #1E90FF;
+        }
+
+        .btn-filtrar {
+            background: #1E90FF;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .btn-filtrar:hover {
+            background: #1C86EE;
+            transform: translateY(-2px);
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="frame">
-            <h2>VISUALIZAR MOVIMENTAÇÕES</h2>
-            <form method="GET" action="{{ url_for('visualizar_movimentacoes') }}">
-                <button class="btn btn-secondary mb-2" type="button" onclick="toggleFilterMenu()">Mostrar/Esconder Filtros</button>
-                <div id="filter-menu" class="filter-menu" style="display: none;">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <input type="text" class="filter-input" name="id_equipamento_filtro" placeholder="Filtrar por ID" value="{{ request.args.get('id_equipamento_filtro', '') }}">
-                                </th>
-                                <th>
-                                    <select class="filter-select" name="origem_filtro">
-                                        <option value="">Filtrar por Origem</option>
-                                        {% for origem in origens %}
-                                        <option value="{{ origem }}" {% if request.args.get('origem_filtro') == origem %}selected{% endif %}>{{ origem }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </th>
-                                <th>
-                                    <select class="filter-select" name="destino_filtro">
-                                        <option value="">Filtrar por Destino</option>
-                                        {% for destino in destinos %}
-                                        <option value="{{ destino }}" {% if request.args.get('destino_filtro') == destino %}selected{% endif %}>{{ destino }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </th>
-                                <th>
-                                    <input type="date" class="filter-input" name="data_filtro" placeholder="Filtrar por Data" value="{{ request.args.get('data_filtro', '') }}">
-                                </th>
-                                <th>
-                                    <select class="filter-select" name="tipo_filtro">
-                                        <option value="">Filtrar por Tipo</option>
-                                        {% for tipo in tipos %}
-                                        <option value="{{ tipo }}" {% if request.args.get('tipo_filtro') == tipo %}selected{% endif %}>{{ tipo }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </th>
-                            </tr>
-                        </thead>
-                    </table>
+        <div class="frame shadow-lg">
+            <h2 class="mb-4">VISUALIZAR MOVIMENTAÇÕES</h2>
+            <form method="GET" action="{{ url_for('visualizar_movimentacoes') }}" class="mb-3">
+                <button class="btn btn-outline-light filtro-btn-icone" type="button" onclick="toggleFilterMenu()" title="Mostrar/Esconder Filtros">
+                    <span class="mr-1">🔍</span>Filtros
+                </button>
+                <div id="filter-menu" class="filter-menu card p-3 mb-3 animate__animated animate__fadeIn" style="display: none; background: rgba(30,30,60,0.95); border-radius: 12px;">
+                    <div class="row no-gutters align-items-center filtro-barra p-2 mb-2 rounded">
+                        <div class="col filtro-campo">
+                            <input type="text" class="form-control filtro-input" name="id_equipamento_filtro" placeholder="Filtrar por ID" value="{{ request.args.get('id_equipamento_filtro', '') }}">
+                        </div>
+                        <div class="col filtro-campo">
+                            <select class="form-control filtro-input" name="origem_filtro">
+                                <option value="">Origem</option>
+                                {% for origem in origens %}
+                                <option value="{{ origem }}" {% if request.args.get('origem_filtro') == origem %}selected{% endif %}>{{ origem }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col filtro-campo">
+                            <select class="form-control filtro-input" name="destino_filtro">
+                                <option value="">Destino</option>
+                                {% for destino in destinos %}
+                                <option value="{{ destino }}" {% if request.args.get('destino_filtro') == destino %}selected{% endif %}>{{ destino }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col filtro-campo">
+                            <input type="date" class="form-control filtro-input" name="data_filtro" placeholder="dd/mm/aaaa" value="{{ request.args.get('data_filtro', '') }}">
+                        </div>
+                        <div class="col filtro-campo">
+                            <select class="form-control filtro-input" name="tipo_filtro">
+                                <option value="">Tipo</option>
+                                {% for tipo in tipos %}
+                                <option value="{{ tipo }}" {% if request.args.get('tipo_filtro') == tipo %}selected{% endif %}>{{ tipo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-auto ml-2">
+                            <button type="submit" class="btn btn-filtrar px-4 py-2">Filtrar</button>
+                        </div>
+                    </div>
                 </div>
             </form>
             <script>
@@ -142,10 +191,10 @@
                     }
                 }
             </script>
-            <div class="scrollable-content">
+            <div class="scrollable-content mb-3">
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-striped table-hover table-dark rounded">
+                        <thead class="thead-light">
                             <tr>
                                 <th>ID Equipamento</th>
                                 <th>Origem</th>
@@ -157,7 +206,7 @@
                         </thead>
                         <tbody id="movimentacoes-list">
                             {% for movimentacao in resultados %}
-                            <tr class="{% if 'reinstalação em menos de 24h' in movimentacao[5]|lower %}alerta{% endif %}">
+                            <tr class="linha-mov {% if 'reinstalação em menos de 24h' in movimentacao[5]|lower %}alerta{% endif %}">
                                 <td>{{ movimentacao[0] }}</td>
                                 <td>{{ movimentacao[1] }}</td>
                                 <td>{{ movimentacao[2] }}</td>
@@ -205,9 +254,7 @@
                     {% endif %}
                 </ul>
             </nav>
-
-            <!-- 🔹 Botão "Voltar" agora está centralizado corretamente -->
-            <a href="{{ url_for('index') }}" class="btn-danger-custom">Voltar</a>
+            <a href="{{ url_for('index') }}" class="btn-danger-custom mt-4">Voltar</a>
         </div>
     </div>
 </body>
