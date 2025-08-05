@@ -53,6 +53,7 @@ def db_cursor(dictionary=False, buffered=False):
 
 def criar_tabela_usuarios():
     with db_cursor() as cursor:
+        # Adiciona a coluna 'tipo' se não existir
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -60,15 +61,128 @@ def criar_tabela_usuarios():
                 password VARCHAR(50) NOT NULL
             )
         ''')
+        # Criação/alteração da tabela equipamentos para garantir todos os campos editáveis
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS equipamentos (
+                id_equipamento VARCHAR(50) PRIMARY KEY,
+                modelo VARCHAR(100),
+                chip VARCHAR(100),
+                operadora VARCHAR(100),
+                imei VARCHAR(100),
+                status VARCHAR(100),
+                orgao VARCHAR(100),
+                observacao TEXT
+            )
+        ''')
+        # Garantir que todas as colunas existem (para upgrades)
+        for col, tipo in [
+            ("modelo", "VARCHAR(100)"),
+            ("chip", "VARCHAR(100)"),
+            ("operadora", "VARCHAR(100)"),
+            ("imei", "VARCHAR(100)"),
+            ("status", "VARCHAR(100)"),
+            ("orgao", "VARCHAR(100)"),
+            ("observacao", "TEXT")
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE equipamentos ADD COLUMN {col} {tipo}")
+            except Exception:
+                pass
+        try:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN tipo VARCHAR(20) NOT NULL DEFAULT 'operador'")
+        except Exception:
+            pass  # Coluna já existe
+        # Atualiza todos os usuários existentes para 'operador', exceto o admin padrão
+        cursor.execute("UPDATE usuarios SET tipo = 'operador' WHERE tipo IS NULL OR tipo = ''")
+        cursor.execute("UPDATE usuarios SET tipo = 'admin' WHERE username = %s", ('trackland@hotmail.com',))
+        # Criação da tabela de logs de atividades
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS logs_atividade (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT,
+                username VARCHAR(50),
+                acao VARCHAR(255),
+                data_hora DATETIME,
+                detalhes TEXT,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+            )
+        ''')
+# Rota para editar equipamento (apenas admin)
+@app.route('/editar_equipamento/<id_equipamento>', methods=['GET', 'POST'])
+def editar_equipamento(id_equipamento):
+    if session.get('tipo') != 'admin':
+        flash('Acesso negado: apenas administradores podem editar equipamentos.', 'danger')
+        return redirect(url_for('index'))
+
+    """
+    Edita um equipamento. Apenas administradores podem acessar.
+    Melhoria: busca todas as listas em uma única conexão e cursor, reduzindo overhead.
+    """
+    with db_cursor() as cursor:
+        cursor.execute("SELECT DISTINCT modelo FROM equipamentos")
+        modelos = [row[0] for row in cursor.fetchall()]
+        cursor.execute("SELECT DISTINCT operadora FROM equipamentos")
+        operadoras = [row[0] for row in cursor.fetchall()]
+        cursor.execute("SELECT DISTINCT orgao FROM equipamentos")
+        orgaos = [row[0] for row in cursor.fetchall()]
+        cursor.execute("SELECT DISTINCT status FROM equipamentos")
+        status_list = [row[0] for row in cursor.fetchall()]
+
+    equipamento = None
+    if request.method == 'POST':
+        modelo = request.form.get('modelo')
+        chip = request.form.get('chip')
+        operadora = request.form.get('operadora')
+        imei = request.form.get('imei')
+        status = request.form.get('status')
+        orgao = request.form.get('orgao')
+        observacao = request.form.get('observacao')
+        try:
+            # Buscar dados antigos e atualizar em uma única conexão
+            with db_cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT * FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
+                equipamento_antigo = cursor.fetchone()
+                cursor.execute("""
+                    UPDATE equipamentos
+                    SET modelo = %s, chip = %s, operadora = %s, imei = %s, status = %s, orgao = %s, observacao = %s
+                    WHERE id_equipamento = %s
+                """, (modelo, chip, operadora, imei, status, orgao, observacao, id_equipamento))
+            detalhes_log = f"ID: {id_equipamento}\n"
+            if equipamento_antigo:
+                for campo in ['modelo','chip','operadora','imei','status','orgao','observacao']:
+                    valor_antigo = equipamento_antigo.get(campo)
+                    valor_novo = locals()[campo]
+                    if str(valor_antigo) != str(valor_novo):
+                        detalhes_log += f"{campo}: '{valor_antigo}' -> '{valor_novo}'\n"
+            else:
+                detalhes_log += "Equipamento não encontrado para comparação."
+            registrar_log('Edição de Equipamento', detalhes_log)
+            flash('Equipamento atualizado com sucesso!', 'success')
+            return redirect(url_for('visualizar_estoque'))
+        except Exception as e:
+            flash(f'Erro ao atualizar equipamento: {e}', 'danger')
+            # Buscar novamente o equipamento para exibir valores atuais
+            with db_cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT * FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
+                equipamento = cursor.fetchone()
+            return render_template('editar_equipamento.html', equipamento=equipamento, modelos=modelos, operadoras=operadoras, orgaos=orgaos, status_list=status_list)
+    else:
+        with db_cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT * FROM equipamentos WHERE id_equipamento = %s", (id_equipamento,))
+            equipamento = cursor.fetchone()
+        if not equipamento:
+            flash('Equipamento não encontrado.', 'danger')
+            return redirect(url_for('visualizar_estoque'))
+    return render_template('editar_equipamento.html', equipamento=equipamento, modelos=modelos, operadoras=operadoras, orgaos=orgaos, status_list=status_list)
 
 def adicionar_usuario_padrao():
     with db_cursor() as cursor:
         cursor.execute("SELECT COUNT(*) FROM usuarios WHERE username = %s", ('trackland@hotmail.com',))
         if cursor.fetchone()[0] == 0:
             cursor.execute('''
-                INSERT INTO usuarios (username, password)
-                VALUES (%s, %s)
-            ''', (os.getenv('LOGIN'), os.getenv('LOGIN_PASSWORD')))
+                INSERT INTO usuarios (username, password, tipo)
+                VALUES (%s, %s, %s)
+            ''', (os.getenv('LOGIN'), os.getenv('LOGIN_PASSWORD'), 'admin'))
 
 # Chamar a função para criar a tabela ao iniciar a aplicação
 criar_tabela_usuarios()
@@ -128,15 +242,37 @@ def listar_orgaos():
         orgaos = cursor.fetchall()
     return [orgao[0] for orgao in orgaos]
 
-def listar_equipamentos_com_tecnico(tecnico):
+def listar_equipamentos_com_tecnico(tecnico, pagina=1, por_pagina=20, filtro_id=None, filtro_modelo=None):
+    offset = (pagina - 1) * por_pagina
+    query = "SELECT id_equipamento FROM equipamentos WHERE status = %s"
+    valores = [tecnico]
+    if filtro_id:
+        query += " AND id_equipamento LIKE %s"
+        valores.append(f"{filtro_id}%")
+    if filtro_modelo:
+        query += " AND modelo LIKE %s"
+        valores.append(f"{filtro_modelo}%")
+    query += " ORDER BY id_equipamento LIMIT %s OFFSET %s"
+    valores.extend([por_pagina, offset])
     with db_cursor() as cursor:
-        cursor.execute("SELECT id_equipamento FROM equipamentos WHERE status = %s", (tecnico,))
+        cursor.execute(query, valores)
         equipamentos = cursor.fetchall()
     return [equip[0] for equip in equipamentos]
 
-def listar_equipamentos_em_estoque():
+def listar_equipamentos_em_estoque(pagina=1, por_pagina=20, filtro_id=None, filtro_modelo=None):
+    offset = (pagina - 1) * por_pagina
+    query = "SELECT id_equipamento FROM equipamentos WHERE status = 'EM ESTOQUE'"
+    valores = []
+    if filtro_id:
+        query += " AND id_equipamento LIKE %s"
+        valores.append(f"{filtro_id}%")
+    if filtro_modelo:
+        query += " AND modelo LIKE %s"
+        valores.append(f"{filtro_modelo}%")
+    query += " ORDER BY id_equipamento LIMIT %s OFFSET %s"
+    valores.extend([por_pagina, offset])
     with db_cursor() as cursor:
-        cursor.execute("SELECT id_equipamento FROM equipamentos WHERE status = 'EM ESTOQUE'")
+        cursor.execute(query, valores)
         equipamentos = cursor.fetchall()
     return [equip[0] for equip in equipamentos]
 
@@ -158,16 +294,21 @@ def login():
         if user:
             session['user_id'] = user['id']
             session['username'] = user['username']
+            session['tipo'] = user.get('tipo', 'operador')
+            registrar_log('Login', 'Login realizado com sucesso')
             flash('Login realizado com sucesso!', 'success')
             return redirect(url_for('index'))
         else:
+            registrar_log('Login falhou', f'Tentativa de login para {username}')
             flash('Usuário ou senha incorretos!', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
+    registrar_log('Logout', 'Logout realizado com sucesso')
     session.pop('user_id', None)
     session.pop('username', None)
+    session.pop('tipo', None)
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('login'))
 
@@ -337,16 +478,38 @@ def transferir_tecnico_para_outro():
 @app.route('/equipamentos_com_tecnico', methods=['GET'])
 def equipamentos_com_tecnico():
     tecnico = request.args.get('tecnico')
-    equipamentos = listar_equipamentos_com_tecnico(tecnico)
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = request.args.get('por_pagina', 20, type=int)
+    filtro_id = request.args.get('id_equipamento')
+    filtro_modelo = request.args.get('modelo')
+    equipamentos = listar_equipamentos_com_tecnico(tecnico, pagina, por_pagina, filtro_id, filtro_modelo)
     return jsonify(equipamentos)
 
 @cache.cached(timeout=120, key_prefix='visualizar_estoque')
 @app.route('/visualizar_estoque')
 def visualizar_estoque():
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = request.args.get('por_pagina', 20, type=int)
+    filtro_status = request.args.get('status')
+    filtro_modelo = request.args.get('modelo')
+    filtro_id = request.args.get('id_equipamento')
     try:
         conexao = conectar_banco()
         cursor = conexao.cursor()
-        cursor.execute("SELECT status, COUNT(*) FROM equipamentos GROUP BY status ORDER BY COUNT(*) DESC")
+        query = "SELECT status, COUNT(*) FROM equipamentos WHERE 1=1"
+        valores = []
+        if filtro_status:
+            query += " AND status = %s"
+            valores.append(filtro_status)
+        if filtro_modelo:
+            query += " AND modelo LIKE %s"
+            valores.append(f"{filtro_modelo}%")
+        if filtro_id:
+            query += " AND id_equipamento LIKE %s"
+            valores.append(f"{filtro_id}%")
+        query += " GROUP BY status ORDER BY COUNT(*) DESC LIMIT %s OFFSET %s"
+        valores.extend([por_pagina, (pagina-1)*por_pagina])
+        cursor.execute(query, valores)
         resultados = cursor.fetchall()
     except Exception as e:
         flash(f"Erro ao visualizar estoque: {e}", "danger")
@@ -354,18 +517,24 @@ def visualizar_estoque():
     finally:
         cursor.close()
         conexao.close()
-    return render_template('visualizar_estoque.html', resultados=resultados)
+    return render_template('visualizar_estoque.html', resultados=resultados, pagina=pagina, por_pagina=por_pagina)
 
 @app.route('/detalhes_estoque')
 def detalhes_estoque():
     status = request.args.get('status')
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = 50
+    offset = (pagina - 1) * por_pagina
     try:
         conexao = conectar_banco()
         cursor = conexao.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM equipamentos WHERE status = %s", (status,))
+        cursor.execute(
+            "SELECT * FROM equipamentos WHERE status = %s ORDER BY id_equipamento LIMIT %s OFFSET %s",
+            (status, por_pagina, offset)
+        )
         equipamentos = cursor.fetchall()
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify([])
     finally:
         cursor.close()
         conexao.close()
@@ -792,6 +961,18 @@ def datetimeformat(value):
     if isinstance(value, str):
         value = datetime.strptime(value, '%d/%m/%y %H:%M')
     return value.strftime('%d/%m/%y %H:%M')
+
+# Função para registrar log de atividade
+
+def registrar_log(acao, detalhes=None):
+    usuario_id = session.get('user_id')
+    username = session.get('username')
+    data_hora = datetime.now(TIMEZONE)
+    with db_cursor() as cursor:
+        cursor.execute('''
+            INSERT INTO logs_atividade (usuario_id, username, acao, data_hora, detalhes)
+            VALUES (%s, %s, %s, %s, %s)
+        ''', (usuario_id, username, acao, data_hora, detalhes))
 
 def comparar_equipamentos():
     # URL para obter o token
@@ -1407,6 +1588,18 @@ def dashboard_info():
         "instalacoes": instalacoes,
         "desinstalacoes": desinstalacoes
     })
+
+@app.route('/logs')
+def logs():
+    with db_cursor(dictionary=True) as cursor:
+        cursor.execute('''
+            SELECT l.id, l.username, l.acao, l.data_hora, l.detalhes
+            FROM logs_atividade l
+            ORDER BY l.data_hora DESC
+            LIMIT 100
+        ''')
+        logs = cursor.fetchall()
+    return render_template('logs.html', logs=logs)
 
 if __name__ == "__main__":
     try:

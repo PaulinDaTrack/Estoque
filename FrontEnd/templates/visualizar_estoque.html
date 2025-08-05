@@ -429,8 +429,31 @@
                 .catch(error => console.error('Erro ao filtrar equipamentos:', error));
         }
 
+        // Variáveis globais para scroll infinito
+        let paginaAtual = 1;
+        let carregando = false;
+        let fimDosDados = false;
+        let statusAtualScroll = '';
+
         function mostrarDetalhes(status) {
-            fetch(`/detalhes_estoque?status=${status}`)
+            paginaAtual = 1;
+            fimDosDados = false;
+            statusAtualScroll = status;
+            const detalhesList = document.getElementById('detalhes-list');
+            detalhesList.innerHTML = '';
+            carregarMaisDetalhes(status, true);
+            // Adiciona o evento de scroll apenas uma vez
+            const detalhesContainer = document.querySelector('.detalhes-table-container');
+            detalhesContainer.onscroll = function() {
+                if (!carregando && !fimDosDados && (detalhesContainer.scrollTop + detalhesContainer.clientHeight >= detalhesContainer.scrollHeight - 10)) {
+                    carregarMaisDetalhes(statusAtualScroll, false);
+                }
+            };
+        }
+
+        function carregarMaisDetalhes(status, limpar) {
+            carregando = true;
+            fetch(`/detalhes_estoque?status=${encodeURIComponent(status)}&pagina=${paginaAtual}`)
                 .then(response => response.json())
                 .then(data => {
                     const detalhesDiv = document.getElementById('detalhes');
@@ -439,16 +462,20 @@
                     const extraColumn = document.getElementById('extra-column');
                     const localAtual = document.getElementById('local-atual');
                     statusTable.style.display = 'none';
-                    detalhesList.innerHTML = '';
+                    if (limpar) detalhesList.innerHTML = '';
                     if (data.length > 0) {
                         if (status === 'PARA TESTAR') {
                             extraColumn.style.display = 'table-cell';
                         } else {
                             extraColumn.style.display = 'none';
                         }
-                        localAtual.textContent = `Local Atual: ${status}`; // Exibir local atual
+                        localAtual.textContent = `Local Atual: ${status}`;
                         data.forEach(equip => {
                             const tr = document.createElement('tr');
+                            let botoes = '';
+                            if (window.isAdmin) {
+                                botoes += `<a href="/editar_equipamento/${equip.id_equipamento}" class="btn btn-warning btn-sm">Editar</a>`;
+                            }
                             tr.innerHTML = `
                                 <td>${equip.id_equipamento || 'Nenhum'}</td>
                                 <td>${equip.modelo || 'Nenhum'}</td>
@@ -460,19 +487,31 @@
                                     ${status === 'PARA TESTAR' ? `<input type="text" value="${equip.observacao || ''}" id="observacao-${equip.id_equipamento}">` : equip.observacao || 'Nenhum'}
                                 </td>
                                 ${status === 'PARA TESTAR' ? `<td><button class="btn btn-success" onclick="moverParaEstoque('${equip.id_equipamento}')">Mover para Estoque</button></td>` : ''}
+                                <td>${botoes}</td>
                             `;
                             detalhesList.appendChild(tr);
                         });
                         detalhesDiv.style.display = 'block';
-                        document.getElementById('status-atual').value = status; // Definir o status atual
+                        document.getElementById('status-atual').value = status;
+                        paginaAtual++;
+                        if (data.length < 50) { // Supondo 50 por página
+                            fimDosDados = true;
+                        }
                     } else {
-                        detalhesDiv.style.display = 'none';
-                        alert('Nenhum equipamento encontrado para o status selecionado.');
+                        if (paginaAtual === 1) {
+                            detalhesDiv.style.display = 'none';
+                            alert('Nenhum equipamento encontrado para o status selecionado.');
+                        }
+                        fimDosDados = true;
                     }
                 })
                 .catch(error => {
                     console.error('Erro ao buscar detalhes:', error);
-                    alert('Erro ao buscar detalhes. Por favor, tente novamente.');
+                    if (paginaAtual === 1) alert('Erro ao buscar detalhes. Por favor, tente novamente.');
+                    fimDosDados = true;
+                })
+                .finally(() => {
+                    carregando = false;
                 });
         }
 
@@ -508,6 +547,10 @@
             })
             .catch(error => console.error('Erro ao mover equipamento para estoque:', error));
         }
+    </script>
+    <script>
+        // Expor variável para saber se é admin
+        window.isAdmin = {{ (session.get('tipo') == 'admin') | tojson }};
     </script>
 </body>
 </html>
