@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Equipamento</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background: #1a1040 url('/static/fundoInicial4.png') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .edit-container {
+            background: rgba(30,58,138,0.18);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18);
+            padding: 32px 32px 24px 32px;
+            min-width: 340px;
+            max-width: 420px;
+            margin: 32px auto;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #fff;
+            font-weight: 900;
+            font-size: 1.5rem;
+            letter-spacing: 0.04em;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        label {
+            color: #e0e0ff;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        input, select {
+            width: 100%;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid #3a3a7a;
+            background: #2a3570;
+            color: #fff;
+            font-family: 'Montserrat', Andale Mono, monospace;
+            font-size: 1rem;
+        }
+        input[readonly] {
+            background: #222255;
+            color: #aaa;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 18px;
+        }
+        .btn-primary {
+            background: #1e90ff;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 24px;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #444;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 24px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover {
+            background: #222;
+        }
+        select {
+            background: #2a3570 !important;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-container">
+        <h2>Editar Equipamento</h2>
+        <form method="post">
+            <div>
+                <label>ID:</label>
+                <input type="text" name="id_equipamento" value="{{ equipamento.id_equipamento }}" readonly>
+            </div>
+            <div>
+                <label>Modelo:</label>
+                <select name="modelo">
+                    {% for modelo in modelos %}
+                        <option value="{{ modelo }}" {% if equipamento.modelo == modelo %}selected{% endif %}>{{ modelo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Chip:</label>
+                <input type="text" name="chip" value="{{ equipamento.chip }}">
+            </div>
+            <div>
+                <label>Operadora:</label>
+                <select name="operadora">
+                    {% for operadora in operadoras %}
+                        <option value="{{ operadora }}" {% if equipamento.operadora == operadora %}selected{% endif %}>{{ operadora }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>IMEI:</label>
+                <input type="text" name="imei" value="{{ equipamento.imei }}">
+            </div>
+            <div>
+                <label>Status:</label>
+                <select name="status">
+                    {% for status in status_list %}
+                        <option value="{{ status }}" {% if equipamento.status == status %}selected{% endif %}>{{ status }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Órgão:</label>
+                <select name="orgao">
+                    {% for orgao in orgaos %}
+                        <option value="{{ orgao }}" {% if equipamento.orgao == orgao %}selected{% endif %}>{{ orgao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Observação:</label>
+                <input type="text" name="observacao" value="{{ equipamento.observacao }}">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{{ url_for('visualizar_estoque') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
