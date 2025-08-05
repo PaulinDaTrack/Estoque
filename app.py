@@ -118,15 +118,34 @@ def editar_equipamento(id_equipamento):
     Edita um equipamento. Apenas administradores podem acessar.
     Melhoria: busca todas as listas em uma única conexão e cursor, reduzindo overhead.
     """
-    with db_cursor() as cursor:
-        cursor.execute("SELECT DISTINCT modelo FROM equipamentos")
-        modelos = [row[0] for row in cursor.fetchall()]
-        cursor.execute("SELECT DISTINCT operadora FROM equipamentos")
-        operadoras = [row[0] for row in cursor.fetchall()]
-        cursor.execute("SELECT DISTINCT orgao FROM equipamentos")
-        orgaos = [row[0] for row in cursor.fetchall()]
-        cursor.execute("SELECT DISTINCT status FROM equipamentos")
-        status_list = [row[0] for row in cursor.fetchall()]
+    # Usar cache para acelerar carregamento das listas
+    modelos = cache.get('modelos_distintos')
+    if modelos is None:
+        with db_cursor() as cursor:
+            cursor.execute("SELECT DISTINCT modelo FROM equipamentos WHERE modelo IS NOT NULL AND modelo != '' ORDER BY modelo LIMIT 100")
+            modelos = [row[0] for row in cursor.fetchall()]
+        cache.set('modelos_distintos', modelos, timeout=600)
+
+    operadoras = cache.get('operadoras_distintas')
+    if operadoras is None:
+        with db_cursor() as cursor:
+            cursor.execute("SELECT DISTINCT operadora FROM equipamentos WHERE operadora IS NOT NULL AND operadora != '' ORDER BY operadora LIMIT 50")
+            operadoras = [row[0] for row in cursor.fetchall()]
+        cache.set('operadoras_distintas', operadoras, timeout=600)
+
+    orgaos = cache.get('orgaos_distintos')
+    if orgaos is None:
+        with db_cursor() as cursor:
+            cursor.execute("SELECT DISTINCT orgao FROM equipamentos WHERE orgao IS NOT NULL AND orgao != '' ORDER BY orgao LIMIT 50")
+            orgaos = [row[0] for row in cursor.fetchall()]
+        cache.set('orgaos_distintos', orgaos, timeout=600)
+
+    status_list = cache.get('status_distintos')
+    if status_list is None:
+        with db_cursor() as cursor:
+            cursor.execute("SELECT DISTINCT status FROM equipamentos WHERE status IS NOT NULL AND status != '' ORDER BY status LIMIT 20")
+            status_list = [row[0] for row in cursor.fetchall()]
+        cache.set('status_distintos', status_list, timeout=600)
 
     equipamento = None
     if request.method == 'POST':
