@@ -476,7 +476,7 @@
                             const tr = document.createElement('tr');
                             let botoes = '';
                             if (window.isAdmin) {
-                                botoes += `<a href="/editar_equipamento/${equip.id_equipamento}" class="btn btn-warning btn-sm">Editar</a>`;
+                                botoes += `<a href="/editar_equipamento/${equip.id_equipamento}" class="btn btn-warning btn-sm" data-loading>Editar</a>`;
                             }
                             tr.innerHTML = `
                                 <td>${equip.id_equipamento || 'Nenhum'}</td>
