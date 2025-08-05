@@ -1,18 +1,23 @@
 // loading.js - Exibe overlay de loading em submits e AJAX globais
 
-// Cria overlay se não existir
-if (!document.getElementById('global-loading-overlay')) {
-  const overlay = document.createElement('div');
-  overlay.id = 'global-loading-overlay';
-  overlay.innerHTML = '<div id="global-loading-spinner"></div>';
-  document.body.appendChild(overlay);
-}
+
+// Cria overlay quando DOM estiver pronto
+window.addEventListener('DOMContentLoaded', function() {
+  if (!document.getElementById('global-loading-overlay')) {
+    const overlay = document.createElement('div');
+    overlay.id = 'global-loading-overlay';
+    overlay.innerHTML = '<div id="global-loading-spinner"></div>';
+    document.body.appendChild(overlay);
+  }
+});
 
 function showLoading() {
-  document.getElementById('global-loading-overlay').classList.add('active');
+  var overlay = document.getElementById('global-loading-overlay');
+  if (overlay) overlay.classList.add('active');
 }
 function hideLoading() {
-  document.getElementById('global-loading-overlay').classList.remove('active');
+  var overlay = document.getElementById('global-loading-overlay');
+  if (overlay) overlay.classList.remove('active');
 }
 
 // Ativa loading em todos os formulários
@@ -26,10 +31,31 @@ window.addEventListener('DOMContentLoaded', function() {
 
 // Ativa loading em todos os links e botões com data-loading
 window.addEventListener('DOMContentLoaded', function() {
+  // Elementos com data-loading
   document.querySelectorAll('[data-loading]').forEach(function(el) {
     el.addEventListener('click', function() {
       showLoading();
     });
+  });
+
+  // Links <a> que redirecionam (exceto download e #)
+  document.querySelectorAll('a[href]:not([href^="#"]):not([download])').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      // Só mostra se for link normal (não abrir em nova aba)
+      if (!link.target || link.target === '_self') {
+        showLoading();
+      }
+    });
+  });
+
+  // Botões que usam window.location.href no onclick
+  document.querySelectorAll('button[onclick]').forEach(function(btn) {
+    var onclick = btn.getAttribute('onclick');
+    if (onclick && onclick.includes('window.location.href')) {
+      btn.addEventListener('click', function() {
+        showLoading();
+      });
+    }
   });
 });
 
