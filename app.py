@@ -450,7 +450,8 @@ def transferir_estoque_para_tecnico():
 @app.route('/transferir_tecnico_para_outro', methods=['GET', 'POST'])
 def transferir_tecnico_para_outro():
     tecnicos = listar_tecnicos()
-    ids_equipamentos = listar_equipamentos_com_tecnico(tecnicos[0]) if tecnicos else []
+    # Não busca equipamentos inicialmente, será feito via AJAX
+    ids_equipamentos = []
     if request.method == 'POST':
         try:
             conexao = conectar_banco()

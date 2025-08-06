@@ -70,6 +70,7 @@
             tecnicoDestinoGroup.style.display = acao === 'Transferir para outro técnico' ? 'block' : 'none';
         }
         document.addEventListener('DOMContentLoaded', atualizarVisibilidadeTecnicoDestino);
+
         function validarSelecao() {
             var selecionados = document.querySelectorAll('input[name="ids_equipamentos[]"]:checked');
             var erroSelecao = document.getElementById('erro-selecao');
@@ -80,11 +81,13 @@
             erroSelecao.textContent = '';
             return true;
         }
+
         function selecionarTodos() {
             var checkboxes = document.querySelectorAll('input[name="ids_equipamentos[]"]');
             var selectAllCheckbox = document.getElementById('select_all');
             checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
         }
+
         function filtrarEquipamentos() {
             var input = document.getElementById('pesquisar_equipamento').value;
             var ids = input.split(';').map(id => id.trim());
@@ -97,15 +100,17 @@
                 }
             });
         }
+
         document.getElementById('pesquisar_equipamento').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 this.value += ';';
             }
         });
-        document.getElementById('tecnico_origem').addEventListener('change', function() {
-            const tecnicoOrigem = this.value;
-            fetch(`/equipamentos_com_tecnico?tecnico=${tecnicoOrigem}`)
+
+        function atualizarEquipamentosDisponiveis() {
+            const tecnicoOrigem = document.getElementById('tecnico_origem').value;
+            fetch(`/equipamentos_com_tecnico?tecnico=${encodeURIComponent(tecnicoOrigem)}&por_pagina=10000`)
                 .then(response => response.json())
                 .then(data => {
                     const equipamentosDisponiveis = document.getElementById('ids_equipamentos');
@@ -118,25 +123,20 @@
                         equipamentosDisponiveis.appendChild(div);
                     });
                 })
-                .catch(error => console.error('Erro ao buscar equipamentos:', error));
-        });
-        function atualizarEquipamentosDisponiveis() {
-            const tecnicoOrigem = document.getElementById('tecnico_origem').value;
-            fetch(`/equipamentos_com_tecnico?tecnico=${tecnicoOrigem}`)
-                .then(response => response.json())
-                .then(data => {
-                    const equipamentosDisponiveis = document.getElementById('ids_equipamentos');
-                    equipamentosDisponiveis.innerHTML = '';
-                    data.forEach(id => {
-                        const div = document.createElement('div');
-                        div.className = 'form-check';
-                        div.innerHTML = `<input class="form-check-input" type="checkbox" name="ids_equipamentos[]" value="${id}" id="equip${id}">
-                                         <label class="form-check-label" for="equip${id}">${id}</label>`;
-                        equipamentosDisponiveis.appendChild(div);
-                    });
+                .then(() => {
+                    // Reaplicar eventos após atualizar lista
+                    document.getElementById('select_all').onclick = selecionarTodos;
+                    document.getElementById('pesquisar_equipamento').onkeyup = filtrarEquipamentos;
                 })
                 .catch(error => console.error('Erro ao buscar equipamentos:', error));
         }
+
+        document.getElementById('tecnico_origem').addEventListener('change', atualizarEquipamentosDisponiveis);
+
+        // Carregar equipamentos do técnico selecionado ao abrir a página
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarEquipamentosDisponiveis();
+        });
     </script>
 </body>
 </html>
