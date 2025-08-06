@@ -261,7 +261,7 @@ def listar_orgaos():
         orgaos = cursor.fetchall()
     return [orgao[0] for orgao in orgaos]
 
-def listar_equipamentos_com_tecnico(tecnico, pagina=1, por_pagina=20, filtro_id=None, filtro_modelo=None):
+def listar_equipamentos_com_tecnico(tecnico, pagina=1, por_pagina=1000, filtro_id=None, filtro_modelo=None):
     offset = (pagina - 1) * por_pagina
     query = "SELECT id_equipamento FROM equipamentos WHERE status = %s"
     valores = [tecnico]
