@@ -278,7 +278,7 @@ def listar_equipamentos_com_tecnico(tecnico, pagina=1, por_pagina=20, filtro_id=
         equipamentos = cursor.fetchall()
     return [equip[0] for equip in equipamentos]
 
-def listar_equipamentos_em_estoque(pagina=1, por_pagina=20, filtro_id=None, filtro_modelo=None):
+def listar_equipamentos_em_estoque(pagina=1, por_pagina=10000, filtro_id=None, filtro_modelo=None):
     offset = (pagina - 1) * por_pagina
     query = "SELECT id_equipamento FROM equipamentos WHERE status = 'EM ESTOQUE'"
     valores = []
