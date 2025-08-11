@@ -271,7 +271,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='loading.css') }}">
 <script src="{{ url_for('static', filename='loading.js') }}"></script>
 
-<body>
+<body data-is-admin="{{ (session.get('tipo') == 'admin') | tojson }}">
     <div class="container">
         <h2>VISUALIZAR ESTOQUE</h2>
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
@@ -396,6 +396,7 @@
         });
 
         function filtrarTabela() {
+            const statusAtual = document.getElementById('status-atual').value || '';
             const filtros = {
                 id: document.getElementById('filter-id').value,
                 modelo: document.getElementById('filter-modelo').value,
@@ -404,7 +405,7 @@
                 imei: document.getElementById('filter-imei').value,
                 orgao: document.getElementById('filter-orgao').value,
                 observacao: document.getElementById('filter-observacao').value,
-                status: document.getElementById('status-atual').value // Adicionar o status atual aos filtros
+                status: statusAtual
             };
 
             const queryString = new URLSearchParams(filtros).toString();
@@ -413,9 +414,32 @@
                 .then(response => response.json())
                 .then(data => {
                     const detalhesList = document.getElementById('detalhes-list');
+                    const extraColumn = document.getElementById('extra-column');
                     detalhesList.innerHTML = '';
+
+                    // Ajusta o header extra para o caso "PARA TESTAR"
+                    if (statusAtual === 'PARA TESTAR') {
+                        extraColumn.style.display = 'table-cell';
+                    } else {
+                        extraColumn.style.display = 'none';
+                    }
+
                     data.forEach(equip => {
                         const tr = document.createElement('tr');
+
+                        const observacaoCell = (statusAtual === 'PARA TESTAR')
+                            ? `<input type="text" value="${equip.observacao || ''}" id="observacao-${equip.id_equipamento}">`
+                            : (equip.observacao || 'Nenhum');
+
+                        const moverCell = (statusAtual === 'PARA TESTAR')
+                            ? `<td><button class="btn btn-success" onclick="moverParaEstoque('${equip.id_equipamento}')">Mover para Estoque</button></td>`
+                            : '';
+
+                        let botoes = '';
+                        if (window.isAdmin) {
+                            botoes = `<a href="/editar_equipamento/${equip.id_equipamento}" class="btn btn-warning btn-sm" data-loading>Editar</a>`;
+                        }
+
                         tr.innerHTML = `
                             <td>${equip.id_equipamento || 'Nenhum'}</td>
                             <td>${equip.modelo || 'Nenhum'}</td>
@@ -423,7 +447,9 @@
                             <td>${equip.operadora || 'Nenhum'}</td>
                             <td>${equip.imei || 'Nenhum'}</td>
                             <td>${equip.orgao || 'Nenhum'}</td>
-                            <td>${equip.observacao || 'Nenhum'}</td>
+                            <td>${observacaoCell}</td>
+                            ${moverCell}
+                            <td>${botoes}</td>
                         `;
                         detalhesList.appendChild(tr);
                     });
@@ -552,7 +578,7 @@
     </script>
     <script>
         // Expor variável para saber se é admin
-        window.isAdmin = {{ (session.get('tipo') == 'admin') | tojson }};
+        window.isAdmin = document.body.dataset.isAdmin === 'true';
     </script>
 </body>
 </html>
